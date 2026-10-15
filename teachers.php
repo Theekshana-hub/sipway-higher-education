@@ -1,295 +1,260 @@
 <?php
 define('SIPWAY_APP', true);
-
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/functions.php';
 
 $pdo = getDB();
+$search    = trim($_GET['q'] ?? '');
+$subjectId = (int)($_GET['subject'] ?? 0);
+$page      = max(1, (int)($_GET['page'] ?? 1));
+$perPage   = 12;
 
-$search = trim($_GET['q'] ?? '');
-$page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 12;
+/* ---------- Helpers ---------- */
+function hasCol(PDO $pdo, $table, $col) {
+    $s = $pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $pdo->quote($col));
+    return (bool)$s->fetch();
+}
+function tUrl(array $over = []) {
+    global $search, $subjectId;
+    $q = array_merge(['q' => $search, 'subject' => $subjectId ?: '', 'page' => ''], $over);
+    $q = array_filter($q, fn($v) => $v !== '' && $v !== null && $v !== 0);
+    return asset('teachers.php') . ($q ? '?' . http_build_query($q) : '');
+}
 
-$where = ["status = 'active'"];
+/* ---------- Subjects (dropdown filter) ---------- */
+$subjects = $pdo->query("SELECT id, name FROM subjects WHERE status = 'active' ORDER BY name ASC")->fetchAll();
+$subjectNames = [];
+foreach ($subjects as $s) {
+    $subjectNames[(int)$s['id']] = $s['name'];
+}
+if ($subjectId && !isset($subjectNames[$subjectId])) {
+    $subjectId = 0;
+}
+
+/* ---------- Check relations ---------- */
+$hasTeacherIdInClasses = hasCol($pdo, 'classes', 'teacher_id');
+$hasTeacherSubjects    = hasCol($pdo, 'teacher_subjects', 'teacher_id')
+                      && hasCol($pdo, 'teacher_subjects', 'subject_id');
+
+/* ---------- Teachers query ---------- */
+$where  = ["t.status = 'active'"];
 $params = [];
 
 if ($search !== '') {
-    $where[] = "(full_name LIKE ? OR qualification LIKE ?)";
+    $where[]  = "(t.full_name LIKE ? OR t.qualification LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
 
+// Subject filter (via teacher_subjects හෝ classes)
+if ($subjectId) {
+    if ($hasTeacherSubjects) {
+        $where[]  = "t.id IN (SELECT teacher_id FROM teacher_subjects WHERE subject_id = ?)";
+        $params[] = $subjectId;
+    } elseif ($hasTeacherIdInClasses) {
+        // fallback: classes table එකෙන් filter කරන්න (title වගේ)
+        $where[]  = "t.id IN (SELECT teacher_id FROM classes WHERE status = 'published' AND title LIKE ?)";
+        $params[] = "%" . ($subjectNames[$subjectId] ?? '') . "%";
+    }
+}
+
 $whereClause = implode(' AND ', $where);
 
-$countStmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE $whereClause");
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM teachers t WHERE $whereClause");
 $countStmt->execute($params);
-$total = (int)$countStmt->fetchColumn();
+$total      = (int)$countStmt->fetchColumn();
+$totalPages = max(1, (int)ceil($total / $perPage));
+$page       = min($page, $totalPages);
+$offset     = ($page - 1) * $perPage;
 
-$pagination = paginate($total, $perPage, $page);
+/* 
+   Class Title ගන්න (classes table එකෙන්)
+   Teacher කෙනෙක්ට classes කීපයක් තිබුණත් පළවෙනි එක ගන්නවා
+*/
+$selectClassTitle = "NULL AS class_title";
+if ($hasTeacherIdInClasses) {
+    $selectClassTitle = "(SELECT c2.title FROM classes c2 
+                          WHERE c2.teacher_id = t.id AND c2.status = 'published' 
+                          ORDER BY c2.featured DESC, c2.created_at DESC 
+                          LIMIT 1) AS class_title";
+}
 
-$limit = (int)$pagination['per_page'];
-$offset = (int)$pagination['offset'];
-
-$stmt = $pdo->prepare(
-    "SELECT * FROM teachers
-     WHERE $whereClause
-     ORDER BY sort_order ASC, full_name ASC
-     LIMIT $limit OFFSET $offset"
-);
+$stmt = $pdo->prepare("SELECT t.*, $selectClassTitle
+    FROM teachers t
+    WHERE $whereClause
+    ORDER BY t.sort_order ASC, t.full_name ASC
+    LIMIT " . (int)$perPage . " OFFSET " . (int)$offset);
 $stmt->execute($params);
 $teachers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $pageTitle = 'Teachers';
-
 include __DIR__ . '/includes/header.php';
 ?>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-    .teachers-section {
-        padding: 60px 0 80px;
+    .cl-wrap { --red:#E31E24; --ink:#1a1a1a; font-family:'Inter',sans-serif; max-width:1280px; margin:0 auto; padding:48px 20px 70px; display:grid; grid-template-columns:290px 1fr; gap:30px; align-items:start; }
+    .cl-side { background:#fff; border-radius:24px; padding:24px; box-shadow:0 8px 30px rgba(0,0,0,.06); position:sticky; top:90px; }
+    .cl-side h5 { font-size:19px; font-weight:700; color:var(--ink); margin:0 0 14px; padding-bottom:14px; border-bottom:2px solid #eee; display:flex; align-items:center; gap:10px; }
+    .cl-side h5.mt { margin-top:26px; }
+    .cl-select { width:100%; appearance:none; -webkit-appearance:none; border:1px solid #e6e6e6; border-radius:30px; padding:15px 46px 15px 20px; font-size:16px; font-family:inherit; color:#333; background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23E31E24' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 20px center; cursor:pointer; outline:none; }
+    .cl-select:focus { border-color:var(--red); }
+    .cl-clear { display:inline-block; margin-top:12px; color:var(--red); font-size:14px; font-weight:600; text-decoration:none; }
+    .cl-search { display:flex; }
+    .cl-search input { flex:1; min-width:0; border:1px solid #e6e6e6; border-right:0; border-radius:30px 0 0 30px; padding:16px 20px; font-size:16px; outline:none; font-family:inherit; }
+    .cl-search button { background:var(--red); color:#fff; border:0; width:62px; border-radius:0 30px 30px 0; cursor:pointer; font-size:16px; }
+    .cl-count { color:#666; font-size:19px; margin:2px 0 22px; }
+    .cl-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:30px; }
+    .cl-card { background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,.07); display:flex; flex-direction:column; transition:transform .2s, box-shadow .2s; }
+    .cl-card:hover { transform:translateY(-4px); box-shadow:0 14px 36px rgba(0,0,0,.11); }
+    .cl-img { position:relative; aspect-ratio:4/5; background:#111; overflow:hidden; }
+    .cl-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s ease; }
+    .cl-card:hover .cl-img img { transform:scale(1.05); }
+    .cl-badge { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; background:#fff; color:#f5a300; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,.2); font-size:15px; }
+    .cl-body { padding:22px 20px 26px; display:flex; flex-direction:column; flex:1; text-align:center; }
+
+    /* Class Title (Biology, Maths...) under image */
+    .cl-cat { 
+        color:var(--red); 
+        font-size:13.5px; 
+        font-weight:700; 
+        letter-spacing:.8px; 
+        text-transform:uppercase; 
+        margin-bottom:6px;
+        min-height:18px; 
     }
 
-    .teachers-search .form-control {
-        border-radius: 50px;
-        padding: 12px 22px;
-        border: 1px solid #eee;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-    }
-
-    .teachers-search .btn-search {
-        border-radius: 50px;
-        padding: 12px 28px;
-        background: #e10613;
-        color: #fff;
-        font-weight: 600;
-        border: none;
-    }
-
-    .teachers-search .btn-search:hover {
-        background: #b8050f;
-        color: #fff;
-    }
-
-    .teacher-card {
-        background: #fff;
-        border-radius: 22px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .teacher-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 18px 40px rgba(225, 6, 19, 0.18);
-    }
-
-    .teacher-photo {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 4 / 5;
-        overflow: hidden;
-        border-bottom: 4px solid #e10613;
-    }
-
-    .teacher-photo img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transition: transform 0.5s ease;
-    }
-
-    .teacher-card:hover .teacher-photo img {
-        transform: scale(1.05);
-    }
-
-    .teacher-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(160deg, #1c1c1c 0%, #7a0f17 45%, #e10613 100%);
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 5rem;
-    }
-
-    .teacher-featured {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        background: #fff;
-        color: #f5a300;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .teacher-info {
-        padding: 22px 18px 26px;
-        text-align: center;
-        flex: 1;
-    }
-
-    .teacher-name {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1c1c1c;
-        margin-bottom: 12px;
-    }
-
-    .teacher-badge {
-        display: inline-block;
-        background: #fde8ea;
-        color: #e10613;
-        font-weight: 600;
-        font-size: 0.95rem;
-        padding: 8px 20px;
-        border-radius: 50px;
-    }
-
-    .teacher-experience {
-        margin-top: 12px;
-        font-size: 0.9rem;
-        color: #777;
-    }
-
-    .teachers-pagination .page-link {
-        color: #e10613;
-        border-radius: 50%;
-        margin: 0 4px;
-        border: 1px solid #eee;
-        min-width: 40px;
-        text-align: center;
-    }
-
-    .teachers-pagination .page-item.active .page-link {
-        background: #e10613;
-        border-color: #e10613;
-        color: #fff;
-    }
+    .cl-title { font-size:22px; font-weight:800; color:var(--ink); margin:0 0 12px; line-height:1.25; }
+    .cl-badge-q { display:inline-block; background:#fde8ea; color:var(--red); font-weight:600; font-size:14px; padding:8px 18px; border-radius:50px; margin-bottom:8px; }
+    .cl-exp { color:#777; font-size:14.5px; margin-top:6px; }
+    .cl-empty { background:#fff; border-radius:24px; padding:60px 20px; text-align:center; color:#777; box-shadow:0 8px 30px rgba(0,0,0,.06); }
+    .cl-pager { display:flex; justify-content:center; gap:8px; margin-top:36px; flex-wrap:wrap; }
+    .cl-pager a, .cl-pager span { min-width:42px; height:42px; padding:0 12px; display:flex; align-items:center; justify-content:center; border-radius:12px; background:#fff; color:#444; text-decoration:none; font-weight:600; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .cl-pager .cur { background:var(--red); color:#fff; }
+    .cl-pager .dis { opacity:.4; }
+    @media (max-width:1100px) { .cl-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media (max-width:860px) { .cl-wrap { grid-template-columns:1fr; } .cl-side { position:static; } }
+    @media (max-width:560px) { .cl-grid { grid-template-columns:1fr; } }
 </style>
 
-<section class="teachers-section">
-    <div class="container">
-
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">Our Teachers</h2>
-            <p class="text-muted mb-0">Learn from experienced and dedicated educators</p>
-        </div>
-
-        <form method="GET" class="teachers-search row g-2 justify-content-center mb-5">
-            <div class="col-md-5">
-                <input
-                    type="text"
-                    name="q"
-                    class="form-control"
-                    placeholder="Search by name or subject..."
-                    value="<?php echo e($search); ?>"
-                >
-            </div>
-            <div class="col-md-2 d-grid">
-                <button type="submit" class="btn btn-search">Search</button>
-            </div>
+<div class="cl-wrap">
+    <!-- ===== Sidebar ===== -->
+    <aside class="cl-side">
+        <h5><i class="fa-solid fa-filter"></i> Subjects</h5>
+        <form method="GET" action="<?php echo asset('teachers.php'); ?>" id="subjectForm">
+            <?php if ($search !== ''): ?>
+                <input type="hidden" name="q" value="<?php echo e($search); ?>">
+            <?php endif; ?>
+            <select name="subject" class="cl-select" onchange="this.form.submit()">
+                <option value="">All Subjects</option>
+                <?php foreach ($subjects as $s): ?>
+                    <option value="<?php echo (int)$s['id']; ?>" <?php echo $subjectId === (int)$s['id'] ? 'selected' : ''; ?>>
+                        <?php echo e($s['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </form>
+        <?php if ($subjectId || $search !== ''): ?>
+            <a class="cl-clear" href="<?php echo asset('teachers.php'); ?>">
+                <i class="fa-solid fa-xmark"></i> Clear filters
+            </a>
+        <?php endif; ?>
+
+        <h5 class="mt"><i class="fa-solid fa-magnifying-glass"></i> Search</h5>
+        <form method="GET" action="<?php echo asset('teachers.php'); ?>" class="cl-search">
+            <?php if ($subjectId): ?>
+                <input type="hidden" name="subject" value="<?php echo $subjectId; ?>">
+            <?php endif; ?>
+            <input type="text" name="q" placeholder="Search by name..." value="<?php echo e($search); ?>">
+            <button type="submit" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+    </aside>
+
+    <!-- ===== Teachers grid ===== -->
+    <main>
+        <div class="cl-count"><?php echo $total; ?> teacher(s) found</div>
 
         <?php if (empty($teachers)): ?>
-
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-person-x" style="font-size:3rem;"></i>
-                <p class="mt-3 mb-0">No teachers found.</p>
+            <div class="cl-empty">
+                <i class="fa-regular fa-user fa-2x" style="margin-bottom:12px;"></i>
+                <p style="margin:0;">No teachers found. Try another subject or search term.</p>
             </div>
-
         <?php else: ?>
-
-            <div class="row g-4">
-
-                <?php foreach ($teachers as $t): ?>
-
-                    <div class="col-lg-4 col-md-6">
-                        <div class="teacher-card">
-
-                            <div class="teacher-photo">
-                                <?php if (!empty($t['profile_image'])): ?>
-                                    <img
-                                        src="<?php echo e(getImageUrl($t['profile_image'])); ?>"
-                                        alt="<?php echo e($t['full_name']); ?>"
-                                        loading="lazy"
-                                    >
-                                <?php else: ?>
-                                    <div class="teacher-placeholder">
-                                        <i class="bi bi-person-tie"></i>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($t['featured'])): ?>
-                                    <span class="teacher-featured">
-                                        <i class="bi bi-star-fill"></i>
-                                    </span>
-                                <?php endif; ?>
+            <div class="cl-grid">
+                <?php foreach ($teachers as $t):
+                    // Classes page එකේ Title එක
+                    $classTitle = $t['class_title'] ?? '';
+                ?>
+                <article class="cl-card">
+                    <!-- Image -->
+                    <div class="cl-img">
+                        <?php if (!empty($t['profile_image'])): ?>
+                            <img src="<?php echo e(getImageUrl($t['profile_image'])); ?>"
+                                 alt="<?php echo e($t['full_name']); ?>"
+                                 loading="lazy">
+                        <?php else: ?>
+                            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#1c1c1c 0%,#7a0f17 45%,#E31E24 100%);color:rgba(255,255,255,.9);font-size:4.5rem;">
+                                <i class="fa-solid fa-user-tie"></i>
                             </div>
+                        <?php endif; ?>
 
-                            <div class="teacher-info">
-                                <h3 class="teacher-name">
-                                    <?php echo e($t['full_name']); ?>
-                                </h3>
-
-                                <?php if (!empty($t['qualification'])): ?>
-                                    <span class="teacher-badge">
-                                        <?php echo e(truncate($t['qualification'], 40)); ?>
-                                    </span>
-                                <?php endif; ?>
-
-                                <?php if ((int)$t['experience_years'] > 0): ?>
-                                    <div class="teacher-experience">
-                                        <i class="bi bi-award"></i>
-                                        <?php echo (int)$t['experience_years']; ?> years experience
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                        </div>
+                        <?php if (!empty($t['featured'])): ?>
+                            <span class="cl-badge"><i class="fa-solid fa-star"></i></span>
+                        <?php endif; ?>
                     </div>
 
-                <?php endforeach; ?>
+                    <!-- Body -->
+                    <div class="cl-body">
+                        <!-- Class Title (Biology, Maths, Chemistry...) -->
+                        <?php if ($classTitle): ?>
+                            <div class="cl-cat"><?php echo e($classTitle); ?></div>
+                        <?php else: ?>
+                            <div class="cl-cat">&nbsp;</div>
+                        <?php endif; ?>
 
+                        <!-- Teacher Name -->
+                        <h3 class="cl-title"><?php echo e($t['full_name']); ?></h3>
+
+                        <?php if (!empty($t['qualification'])): ?>
+                            <span class="cl-badge-q"><?php echo e(truncate($t['qualification'], 40)); ?></span>
+                        <?php endif; ?>
+
+                        <?php if ((int)($t['experience_years'] ?? 0) > 0): ?>
+                            <div class="cl-exp">
+                                <i class="fa-solid fa-award"></i>
+                                <?php echo (int)$t['experience_years']; ?> years experience
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </article>
+                <?php endforeach; ?>
             </div>
 
-        <?php endif; ?>
+            <?php if ($totalPages > 1): ?>
+            <nav class="cl-pager">
+                <?php if ($page > 1): ?>
+                    <a href="<?php echo tUrl(['page' => $page - 1]); ?>"><i class="fa-solid fa-chevron-left"></i></a>
+                <?php else: ?>
+                    <span class="dis"><i class="fa-solid fa-chevron-left"></i></span>
+                <?php endif; ?>
 
-        <?php
-        $totalPages = max(1, (int)ceil($total / $perPage));
-        $baseUrl = asset('teachers.php');
+                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                    <?php if ($p === $page): ?>
+                        <span class="cur"><?php echo $p; ?></span>
+                    <?php else: ?>
+                        <a href="<?php echo tUrl(['page' => $p]); ?>"><?php echo $p; ?></a>
+                    <?php endif; ?>
+                <?php endfor; ?>
 
-        if ($totalPages > 1):
-        ?>
-            <nav aria-label="Teachers pagination" class="teachers-pagination">
-                <ul class="pagination justify-content-center mt-5">
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <?php
-                        $url = $baseUrl . '?' . http_build_query([
-                            'q' => $search,
-                            'page' => $i
-                        ]);
-                        ?>
-                        <li class="page-item<?php echo $i === $page ? ' active' : ''; ?>">
-                            <a class="page-link" href="<?php echo e($url); ?>">
-                                <?php echo $i; ?>
-                            </a>
-                        </li>
-                    <?php endfor; ?>
-                </ul>
+                <?php if ($page < $totalPages): ?>
+                    <a href="<?php echo tUrl(['page' => $page + 1]); ?>"><i class="fa-solid fa-chevron-right"></i></a>
+                <?php else: ?>
+                    <span class="dis"><i class="fa-solid fa-chevron-right"></i></span>
+                <?php endif; ?>
             </nav>
+            <?php endif; ?>
         <?php endif; ?>
-
-    </div>
-</section>
+    </main>
+</div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

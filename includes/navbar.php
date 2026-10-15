@@ -5,7 +5,7 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="<?php echo asset('index.php'); ?>">
             <img src="<?php echo asset($logoPath); ?>" alt="SIPWAY Higher Education" class="logo-img" height="48" onerror="this.src='<?php echo asset('assets/images/logo-placeholder.png'); ?>'">
-            <span class="ms-2 brand-text d-none d-sm-inline">SIPWAY</span>
+            <span class="ms-2 brand-text d-none d-sm-inline">SIPWAY HIGHER EDUCATION</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

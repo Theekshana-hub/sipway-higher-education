@@ -46,6 +46,14 @@ if ($mode === 'direct') {
     $selectSubject = "(SELECT s2.name FROM teacher_subjects ts2 JOIN subjects s2 ON s2.id = ts2.subject_id WHERE ts2.teacher_id = c.teacher_id ORDER BY s2.id LIMIT 1) AS subject_name";
 }
 
+/* ---------- Teacher name ---------- */
+$selectTeacher = "NULL AS teacher_name";
+$joinTeacher   = "";
+if (hasCol($pdo, 'classes', 'teacher_id')) {
+    $selectTeacher = "t.full_name AS teacher_name";
+    $joinTeacher   = "LEFT JOIN teachers t ON c.teacher_id = t.id";
+}
+
 /* ---------- Classes query ---------- */
 $where  = ["c.status = 'published'"];
 $params = [];
@@ -72,9 +80,10 @@ $totalPages = max(1, (int)ceil($total / $perPage));
 $page       = min($page, $totalPages);
 $offset     = ($page - 1) * $perPage;
 
-$stmt = $pdo->prepare("SELECT c.*, $selectSubject
+$stmt = $pdo->prepare("SELECT c.*, $selectSubject, $selectTeacher
     FROM classes c
     $joinSubject
+    $joinTeacher
     WHERE $whereClause
     ORDER BY c.featured DESC, c.created_at DESC
     LIMIT " . (int)$perPage . " OFFSET " . (int)$offset);
@@ -104,6 +113,27 @@ include __DIR__ . '/includes/header.php';
     .cl-img { position:relative; aspect-ratio:4/3; background:#111; }
     .cl-img img { width:100%; height:100%; object-fit:cover; display:block; }
     .cl-badge { position:absolute; top:16px; left:16px; padding:7px 15px; border-radius:20px; font-size:13px; font-weight:600; color:#fff; background:var(--red); }
+    
+    /* Teacher name on image (bottom) */
+    .cl-teacher-badge {
+        position:absolute;
+        bottom:0;
+        left:0;
+        right:0;
+        padding:12px 16px;
+        background:linear-gradient(transparent, rgba(0,0,0,.75));
+        color:#fff;
+        font-size:14.5px;
+        font-weight:600;
+        display:flex;
+        align-items:center;
+        gap:8px;
+    }
+    .cl-teacher-badge i {
+        font-size:14px;
+        opacity:.9;
+    }
+
     .cl-body { padding:22px 26px 26px; display:flex; flex-direction:column; flex:1; }
     .cl-cat { color:var(--red); font-size:13.5px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; min-height:18px; }
     .cl-title { font-size:23px; font-weight:800; color:var(--ink); margin:6px 0 10px; line-height:1.25; }
@@ -164,11 +194,23 @@ include __DIR__ . '/includes/header.php';
                 $subName = $c['subject_name'] ?? '';
                 if ($mode === 'teacher' && $subjectId) { $subName = $subjectNames[$subjectId]; }
                 $price = $c['price'] ?? null;
+                $teacherName = $c['teacher_name'] ?? '';
             ?>
             <article class="cl-card">
                 <div class="cl-img">
                     <img src="<?php echo getImageUrl($c['image']); ?>" alt="<?php echo e($c['title']); ?>" loading="lazy">
-                    <?php if (!empty($c['featured'])): ?><span class="cl-badge">Featured</span><?php endif; ?>
+                    
+                    <?php if (!empty($c['featured'])): ?>
+                        <span class="cl-badge">Featured</span>
+                    <?php endif; ?>
+
+                    <!-- Teacher Name on Image -->
+                    <?php if ($teacherName): ?>
+                        <div class="cl-teacher-badge">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                            <?php echo e($teacherName); ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="cl-body">
                     <div class="cl-cat"><?php echo e($subName); ?></div>

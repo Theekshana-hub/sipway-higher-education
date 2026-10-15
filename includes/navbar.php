@@ -13,7 +13,7 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
         <div class="collapse navbar-collapse" id="mainNavbar">
             <ul class="navbar-nav ms-auto align-items-lg-center">
                 <li class="nav-item">
-                    <a class="nav-link <?php echo isActive('index.php'); ?>" href="<?php echo asset('index.php'); ?>">Home</a>
+                    <a class="nav-link <?php echo isActive('index.php'); ?>" href="<?php echo asset('index.php'); ?>">Home11</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActive('about.php'); ?>" href="<?php echo asset('about.php'); ?>">About</a>

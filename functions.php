@@ -1,21 +1,14 @@
 <?php
-/**
- * SIPWAY Higher Education - Helper Functions
- */
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
-/**
- * Escape HTML output
- */
+
 function e($string) {
     return htmlspecialchars((string)$string, ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * Generate CSRF token
- */
+
 function generateCsrfToken() {
     if (empty($_SESSION[CSRF_TOKEN_NAME])) {
         $_SESSION[CSRF_TOKEN_NAME] = bin2hex(random_bytes(32));
@@ -23,9 +16,7 @@ function generateCsrfToken() {
     return $_SESSION[CSRF_TOKEN_NAME];
 }
 
-/**
- * Verify CSRF token
- */
+
 function verifyCsrfToken($token) {
     if (empty($_SESSION[CSRF_TOKEN_NAME]) || empty($token)) {
         return false;
@@ -33,16 +24,12 @@ function verifyCsrfToken($token) {
     return hash_equals($_SESSION[CSRF_TOKEN_NAME], $token);
 }
 
-/**
- * CSRF input field
- */
+
 function csrfField() {
     return '<input type="hidden" name="' . CSRF_TOKEN_NAME . '" value="' . e(generateCsrfToken()) . '">';
 }
 
-/**
- * Redirect with message
- */
+
 function redirect($url, $message = null, $type = 'success') {
     if ($message) {
         $_SESSION['flash_message'] = $message;
@@ -52,9 +39,7 @@ function redirect($url, $message = null, $type = 'success') {
     exit;
 }
 
-/**
- * Get and clear flash message
- */
+
 function getFlashMessage() {
     if (isset($_SESSION['flash_message'])) {
         $msg = [
@@ -67,9 +52,7 @@ function getFlashMessage() {
     return null;
 }
 
-/**
- * Display flash message HTML
- */
+
 function displayFlashMessage() {
     $flash = getFlashMessage();
     if ($flash) {
@@ -81,25 +64,19 @@ function displayFlashMessage() {
     return '';
 }
 
-/**
- * Check if admin is logged in
- */
+
 function isAdminLoggedIn() {
     return isset($_SESSION['admin_id']) && !empty($_SESSION['admin_id']);
 }
 
-/**
- * Require admin login
- */
+
 function requireAdmin() {
     if (!isAdminLoggedIn()) {
         redirect(BASE_URL . '/admin/login.php');
     }
 }
 
-/**
- * Get current admin
- */
+
 function getCurrentAdmin() {
     if (!isAdminLoggedIn()) return null;
     static $admin = null;
@@ -112,9 +89,7 @@ function getCurrentAdmin() {
     return $admin;
 }
 
-/**
- * Get site setting
- */
+
 function getSetting($key, $default = '') {
     static $settings = null;
     if ($settings === null) {
@@ -128,23 +103,19 @@ function getSetting($key, $default = '') {
     return $settings[$key] ?? $default;
 }
 
-/**
- * Update site setting
- */
+
 function setSetting($key, $value) {
     $pdo = getDB();
     $stmt = $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
     return $stmt->execute([$key, $value]);
 }
 
-/**
- * Safe image path with fallback
- */
+
 function getImageUrl($path, $fallback = 'assets/images/placeholder.png') {
     if (empty($path)) {
         return BASE_URL . '/' . $fallback;
     }
-    // Check if file exists relative to project
+    
     $fullPath = BASE_PATH . '/' . ltrim($path, '/');
     if (file_exists($fullPath)) {
         return BASE_URL . '/' . ltrim($path, '/');
@@ -152,9 +123,7 @@ function getImageUrl($path, $fallback = 'assets/images/placeholder.png') {
     return BASE_URL . '/' . $fallback;
 }
 
-/**
- * Upload image safely
- */
+
 function uploadImage($file, $directory, $prefix = 'img_') {
     if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
         return ['success' => false, 'message' => 'Upload error occurred.'];
@@ -186,14 +155,12 @@ function uploadImage($file, $directory, $prefix = 'img_') {
         return ['success' => false, 'message' => 'Failed to save uploaded file.'];
     }
 
-    // Return relative path from project root
+   
     $relative = str_replace(BASE_PATH . '/', '', $targetPath);
     return ['success' => true, 'path' => $relative, 'filename' => $filename];
 }
 
-/**
- * Delete image file safely
- */
+
 function deleteImage($path) {
     if (empty($path)) return false;
     $fullPath = BASE_PATH . '/' . ltrim($path, '/');
@@ -203,9 +170,7 @@ function deleteImage($path) {
     return false;
 }
 
-/**
- * Log admin activity
- */
+
 function logActivity($action, $details = '', $entityType = null, $entityId = null) {
     if (!isAdminLoggedIn()) return;
     $pdo = getDB();
@@ -220,9 +185,7 @@ function logActivity($action, $details = '', $entityType = null, $entityId = nul
     ]);
 }
 
-/**
- * Pagination helper
- */
+
 function paginate($total, $perPage = 12, $currentPage = 1) {
     $totalPages = max(1, (int)ceil($total / $perPage));
     $currentPage = max(1, min($currentPage, $totalPages));
@@ -238,9 +201,7 @@ function paginate($total, $perPage = 12, $currentPage = 1) {
     ];
 }
 
-/**
- * Build query string preserving params
- */
+
 function buildQueryString($params = [], $exclude = []) {
     $current = $_GET;
     foreach ($exclude as $key) {
@@ -250,33 +211,25 @@ function buildQueryString($params = [], $exclude = []) {
     return http_build_query(array_filter($merged, function($v) { return $v !== '' && $v !== null; }));
 }
 
-/**
- * Truncate text
- */
+
 function truncate($text, $length = 150) {
-    $text = strip_tags($text);
+    $text = strip_tags((string)($text ?? ''));
     if (mb_strlen($text) <= $length) return $text;
     return mb_substr($text, 0, $length) . '...';
 }
 
-/**
- * Format date
- */
+
 function formatDate($date, $format = 'd M Y') {
     if (empty($date)) return '';
     return date($format, strtotime($date));
 }
 
-/**
- * Get base URL helper for assets
- */
+
 function asset($path) {
     return BASE_URL . '/' . ltrim($path, '/');
 }
 
-/**
- * Active nav class
- */
+
 function isActive($page) {
     $current = basename($_SERVER['PHP_SELF']);
     return $current === $page ? 'active' : '';

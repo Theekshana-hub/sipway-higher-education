@@ -240,31 +240,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- Testimonials -->
-<?php if (!empty($testimonials)): ?>
-<section class="section-padding bg-light-gray">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">What Our <span class="highlight">Students</span> Say</h2>
-        </div>
-        <div class="row g-4">
-            <?php foreach ($testimonials as $t): ?>
-                <div class="col-md-4">
-                    <div class="testimonial-card">
-                        <div class="quote-icon mb-2"><i class="fas fa-quote-left"></i></div>
-                        <p class="mb-3"><?php echo e($t['content']); ?></p>
-                        <div class="stars mb-2">
-                            <?php for ($i = 0; $i < (int)$t['rating']; $i++): ?><i class="fas fa-star"></i><?php endfor; ?>
-                        </div>
-                        <strong><?php echo e($t['name']); ?></strong>
-                        <?php if ($t['role']): ?><br><small class="text-muted"><?php echo e($t['role']); ?></small><?php endif; ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
+
 
 <!-- Upcoming Classes -->
 <?php if (!empty($upcomingClasses)): ?>

@@ -110,8 +110,11 @@ include __DIR__ . '/includes/header.php';
     .cl-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:30px; }
     .cl-card { background:#fff; border-radius:24px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,.07); display:flex; flex-direction:column; transition:transform .2s, box-shadow .2s; }
     .cl-card:hover { transform:translateY(-4px); box-shadow:0 14px 36px rgba(0,0,0,.11); }
-    .cl-img { position:relative; aspect-ratio:4/3; background:#111; }
+    
+    /* 16:9 Image */
+    .cl-img { position:relative; aspect-ratio:16/9; background:#111; }
     .cl-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    
     .cl-badge { position:absolute; top:16px; left:16px; padding:7px 15px; border-radius:20px; font-size:13px; font-weight:600; color:#fff; background:var(--red); }
     
     /* Teacher name on image (bottom) */

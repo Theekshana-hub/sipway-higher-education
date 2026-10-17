@@ -143,8 +143,32 @@ include __DIR__ . '/includes/header.php';
     .cl-price { color:var(--ink); font-size:20px; font-weight:800; }
     .cl-price.free { color:#16a34a; }
 
-    .cl-actions { display:flex; align-items:center; margin-top:16px; gap:10px; }
-    .cl-actions .det { flex:1; text-align:center; color:var(--ink); background:#fff; border:1.5px solid var(--line); font-weight:600; text-decoration:none; font-size:15px; padding:11px 14px; border-radius:12px; transition:border-color .2s, color .2s; }
+.cl-actions .det {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #E31E24, #B91C1C);
+    color: #ffffff;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(227, 30, 36, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.cl-actions .det:hover {
+    background: linear-gradient(135deg, #B91C1C, #991B1B);
+    color: #ffffff;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(227, 30, 36, 0.4);
+}
+
     .cl-actions .det:hover { border-color:var(--red); color:var(--red); }
     .cl-actions .enr { flex:1.4; background:var(--red); color:#fff; text-decoration:none; font-weight:700; text-align:center; padding:12px 14px; border-radius:12px; box-shadow:0 8px 18px rgba(227,30,36,.28); font-size:15px; transition:background .2s, transform .2s; }
     .cl-actions .enr:hover { background:var(--red-dark); transform:translateY(-1px); }
@@ -252,7 +276,9 @@ include __DIR__ . '/includes/header.php';
                             <?php endif; ?>
                         </div>
                         <div class="cl-actions">
-                            <a class="det" href="<?php echo asset('class-details.php?id=' . (int)$c['id']); ?>">Details</a>
+                           <a class="det" href="<?php echo asset('class-details.php?id=' . (int)$c['id']); ?>">
+    View Details <i class="fa-solid fa-arrow-right"></i>
+</a>
                             
                         </div>
                     </div>

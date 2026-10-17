@@ -1,15 +1,21 @@
 <?php
 $logoPath = getSetting('logo_path', 'assets/images/logo.png');
+$phone    = getSetting('contact_phone');
+$email    = getSetting('contact_email');
+$address  = getSetting('contact_address');
 ?>
-<footer class="sipway-footer">
+<footer class="sipway-footer" role="contentinfo">
     <div class="container">
-        <div class="row g-4 py-5">
-            <div class="col-lg-4 col-md-6">
-                <a href="<?php echo asset('index.php'); ?>" class="d-inline-block mb-3">
-                    <img src="<?php echo asset($logoPath); ?>" alt="SIPWAY" height="50" class="footer-logo" onerror="this.style.display='none'">
+        <div class="row g-5 footer-main">
+
+            <!-- Brand -->
+            <div class="col-lg-5 col-md-12">
+                <a href="<?php echo asset('index.php'); ?>" class="footer-brand d-inline-block mb-3">
+                    <img src="<?php echo asset($logoPath); ?>" alt="SIPWAY" height="52" class="footer-logo" onerror="this.style.display='none'">
                 </a>
                 <p class="footer-text"><?php echo e(getSetting('footer_text', 'SIPWAY Higher Education — Empowering minds, shaping futures.')); ?></p>
-                <div class="social-links mt-3">
+
+                <div class="social-links">
                     <?php if ($fb = getSetting('facebook_url')): ?>
                         <a href="<?php echo e($fb); ?>" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
                     <?php endif; ?>
@@ -24,7 +30,9 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
                     <?php endif; ?>
                 </div>
             </div>
-            <div class="col-lg-2 col-md-6">
+
+            <!-- Quick links -->
+            <div class="col-lg-3 col-md-6">
                 <h5 class="footer-heading">Quick Links</h5>
                 <ul class="footer-links">
                     <li><a href="<?php echo asset('index.php'); ?>">Home</a></li>
@@ -34,35 +42,48 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
                     <li><a href="<?php echo asset('contact.php'); ?>">Contact</a></li>
                 </ul>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <h5 class="footer-heading">Programs</h5>
-                <ul class="footer-links">
-                    <li><a href="<?php echo asset('classes.php?category=undergraduate'); ?>">Undergraduate</a></li>
-                    <li><a href="<?php echo asset('classes.php?category=postgraduate'); ?>">Postgraduate</a></li>
-                    <li><a href="<?php echo asset('classes.php?category=professional'); ?>">Professional</a></li>
-                    <li><a href="<?php echo asset('classes.php?category=short-courses'); ?>">Short Courses</a></li>
-                </ul>
-            </div>
-            <div class="col-lg-3 col-md-6">
+
+            <!-- Contact -->
+            <div class="col-lg-4 col-md-6">
                 <h5 class="footer-heading">Contact Us</h5>
                 <ul class="footer-contact">
-                    <li><i class="bi bi-geo-alt"></i> <?php echo e(getSetting('contact_address')); ?></li>
-                    <li><i class="bi bi-telephone"></i> <a href="tel:<?php echo e(preg_replace('/\s+/', '', getSetting('contact_phone'))); ?>"><?php echo e(getSetting('contact_phone')); ?></a></li>
-                    <li><i class="bi bi-envelope"></i> <a href="mailto:<?php echo e(getSetting('contact_email')); ?>"><?php echo e(getSetting('contact_email')); ?></a></li>
+                    <?php if ($address): ?>
+                        <li>
+                            <span class="contact-icon"><i class="bi bi-geo-alt"></i></span>
+                            <span><?php echo e($address); ?></span>
+                        </li>
+                    <?php endif; ?>
+                    <?php if ($phone): ?>
+                        <li>
+                            <span class="contact-icon"><i class="bi bi-telephone"></i></span>
+                            <a href="tel:<?php echo e(preg_replace('/\s+/', '', $phone)); ?>"><?php echo e($phone); ?></a>
+                        </li>
+                    <?php endif; ?>
+                    <?php if ($email): ?>
+                        <li>
+                            <span class="contact-icon"><i class="bi bi-envelope"></i></span>
+                            <a href="mailto:<?php echo e($email); ?>"><?php echo e($email); ?></a>
+                        </li>
+                    <?php endif; ?>
                     <?php if ($wa = getSetting('contact_whatsapp')): ?>
-                        <li><i class="bi bi-whatsapp"></i> <a href="https://wa.me/<?php echo e(preg_replace('/[^0-9]/', '', $wa)); ?>" target="_blank">WhatsApp</a></li>
+                        <li>
+                            <span class="contact-icon"><i class="bi bi-whatsapp"></i></span>
+                            <a href="https://wa.me/<?php echo e(preg_replace('/[^0-9]/', '', $wa)); ?>" target="_blank" rel="noopener">Chat on WhatsApp</a>
+                        </li>
                     <?php endif; ?>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom py-3 border-top border-secondary">
-            <div class="row align-items-center">
+
+        <!-- Bottom bar -->
+        <div class="footer-bottom">
+            <div class="row align-items-center gy-2">
                 <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0 small">&copy; <?php echo date('Y'); ?> SIPWAY Higher Education. All rights reserved.</p>
+                    <p class="mb-0">&copy; <?php echo date('Y'); ?> SIPWAY Higher Education. All rights reserved.</p>
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <a href="<?php echo asset('privacy-policy.php'); ?>" class="small me-3">Privacy Policy</a>
-                    <a href="<?php echo asset('terms.php'); ?>" class="small">Terms of Service</a>
+                <div class="col-md-6 text-center text-md-end footer-legal">
+                    <a href="<?php echo asset('privacy-policy.php'); ?>">Privacy Policy</a>
+                    <a href="<?php echo asset('terms.php'); ?>">Terms of Service</a>
                 </div>
             </div>
         </div>

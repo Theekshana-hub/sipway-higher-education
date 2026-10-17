@@ -253,7 +253,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         <div class="cl-actions">
                             <a class="det" href="<?php echo asset('class-details.php?id=' . (int)$c['id']); ?>">Details</a>
-                            <a class="enr" href="<?php echo asset('enroll.php?class_id=' . (int)$c['id']); ?>"><i class="fa-solid fa-credit-card"></i>Enroll Now</a>
+                            
                         </div>
                     </div>
                 </div>

@@ -8,7 +8,6 @@ $address  = getSetting('contact_address');
     <div class="container">
         <div class="row g-5 footer-main">
 
-            <!-- Brand -->
             <div class="col-lg-5 col-md-12">
                 <a href="<?php echo asset('index.php'); ?>" class="footer-brand d-inline-block mb-3">
                     <img src="<?php echo asset($logoPath); ?>" alt="SIPWAY" height="52" class="footer-logo" onerror="this.style.display='none'">
@@ -31,7 +30,7 @@ $address  = getSetting('contact_address');
                 </div>
             </div>
 
-            <!-- Quick links -->
+   
             <div class="col-lg-3 col-md-6">
                 <h5 class="footer-heading">Quick Links</h5>
                 <ul class="footer-links">
@@ -43,7 +42,7 @@ $address  = getSetting('contact_address');
                 </ul>
             </div>
 
-            <!-- Contact -->
+  
             <div class="col-lg-4 col-md-6">
                 <h5 class="footer-heading">Contact Us</h5>
                 <ul class="footer-contact">
@@ -90,9 +89,9 @@ $address  = getSetting('contact_address');
     </div>
 </footer>
 
-<!-- Bootstrap JS -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- SIPWAY JS -->
+
 <script src="<?php echo asset('assets/js/script.js'); ?>"></script>
 </body>
 </html>

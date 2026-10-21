@@ -1,6 +1,4 @@
-/* SIPWAY Higher Education - Main Stylesheet (Enhanced with Animations)
-   Colors matched to official logo
-*/
+
 :root {
     --sipway-yellow: #FFFF00;
     --sipway-purple: #432774;
@@ -46,7 +44,7 @@ a:hover {
     color: #c01f26;
 }
 
-/* ========== KEYFRAME ANIMATIONS ========== */
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -203,22 +201,35 @@ a:hover {
 .delay-6 { animation-delay: 0.6s; }
 
 /* ========== NAVBAR ========== */
+/* ========== SIPWAY NAVBAR (Logo Colors) ========== */
+:root {
+    --sipway-yellow: #FFFF00;
+    --sipway-purple: #432774;
+    --sipway-red: #E2282A;
+    --sipway-black: #000000;
+    --sipway-white: #FFFFFF;
+}
+
+/* Main Navbar */
 .sipway-navbar {
-    background: var(--sipway-black) !important;
-    padding: 0.75rem 0;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.15);
-    transition: all 0.4s ease;
+    background: linear-gradient(90deg, #0a0a0a 0%, #1a0a1f 100%) !important;
+    padding: 0.7rem 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    transition: all 0.35s ease;
+    border-bottom: 2px solid transparent;
 }
 
 .sipway-navbar.scrolled {
-    padding: 0.4rem 0;
-    box-shadow: 0 4px 25px rgba(0,0,0,0.25);
+    padding: 0.45rem 0;
+    background: rgba(10, 10, 10, 0.97) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45);
+    border-bottom-color: var(--sipway-red);
 }
 
+/* Brand */
 .sipway-navbar .navbar-brand {
     font-weight: 700;
-    font-size: 1.4rem;
-    color: var(--sipway-white) !important;
     transition: transform 0.3s ease;
 }
 
@@ -226,49 +237,189 @@ a:hover {
     transform: scale(1.03);
 }
 
-.sipway-navbar .brand-text {
-    letter-spacing: 1px;
-}
-
 .sipway-navbar .logo-img {
     max-height: 48px;
     width: auto;
     object-fit: contain;
-    transition: transform 0.3s ease;
+    transition: transform 0.35s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .sipway-navbar .logo-img:hover {
-    transform: rotate(-5deg) scale(1.05);
+    transform: rotate(-4deg) scale(1.06);
 }
 
-.sipway-navbar .nav-link {
-    color: rgba(255,255,255,0.85) !important;
+/* Brand Text */
+.brand-text-wrap {
+    line-height: 1.15;
+}
+
+.brand-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--sipway-white);
+    letter-spacing: 1.5px;
+    display: block;
+}
+
+.brand-subtitle {
+    font-size: 0.68rem;
     font-weight: 500;
-    padding: 0.5rem 1rem !important;
+    color: var(--sipway-yellow);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    opacity: 0.95;
+}
+
+/* Nav Links */
+.sipway-navbar .nav-link {
+    color: rgba(255, 255, 255, 0.88) !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.55rem 1.05rem !important;
     position: relative;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
+    border-radius: 6px;
 }
 
 .sipway-navbar .nav-link::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: 6px;
     left: 50%;
     width: 0;
-    height: 2px;
+    height: 2.5px;
     background: var(--sipway-red);
-    transition: all 0.3s ease;
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform: translateX(-50%);
 }
 
 .sipway-navbar .nav-link:hover::after,
 .sipway-navbar .nav-link.active::after {
-    width: calc(100% - 2rem);
+    width: 60%;
 }
 
 .sipway-navbar .nav-link:hover,
 .sipway-navbar .nav-link.active {
-    color: var(--sipway-red) !important;
+    color: var(--sipway-yellow) !important;
+}
+
+/* Search Form */
+.search-form .input-group {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.3s ease;
+}
+
+.search-form .input-group:focus-within {
+    border-color: var(--sipway-red);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 3px rgba(226, 40, 42, 0.2);
+}
+
+.search-form .form-control {
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 0.875rem;
+    padding: 0.4rem 1rem;
+    min-width: 160px;
+    max-width: 200px;
+    box-shadow: none !important;
+}
+
+.search-form .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.search-form .form-control:focus {
+    background: transparent !important;
+    color: #fff !important;
+}
+
+.btn-search {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 0.4rem 0.9rem;
+    transition: all 0.25s ease;
+}
+
+.btn-search:hover {
+    color: var(--sipway-yellow) !important;
+}
+
+/* CTA Button */
+.btn-nav-cta {
+    background: var(--sipway-red);
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.5rem 1.35rem;
+    border-radius: 50px;
+    border: none;
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(226, 40, 42, 0.35);
+}
+
+.btn-nav-cta:hover {
+    background: #c01f26;
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(226, 40, 42, 0.5);
+}
+
+.btn-nav-cta:active {
+    transform: translateY(0);
+}
+
+/* Mobile Toggler */
+.sipway-navbar .navbar-toggler {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.4rem 0.6rem;
+}
+
+.sipway-navbar .navbar-toggler:focus {
+    box-shadow: 0 0 0 3px rgba(226, 40, 42, 0.35);
+}
+
+/* Mobile Menu */
+@media (max-width: 991.98px) {
+    .sipway-navbar .navbar-collapse {
+        background: #111;
+        margin-top: 0.75rem;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sipway-navbar .nav-link {
+        padding: 0.7rem 1rem !important;
+        border-radius: 8px;
+    }
+
+    .sipway-navbar .nav-link:hover {
+        background: rgba(226, 40, 42, 0.12);
+    }
+
+    .search-form {
+        width: 100%;
+    }
+
+    .search-form .form-control {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .btn-nav-cta {
+        width: 100%;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
 }
 
 .search-form .form-control {
@@ -291,7 +442,7 @@ a:hover {
     max-width: 220px;
 }
 
-/* ========== BUTTONS ========== */
+
 .btn-sipway {
     background: var(--sipway-red);
     color: var(--sipway-white);

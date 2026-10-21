@@ -46,11 +46,12 @@ define('BANNERS_UPLOAD', UPLOADS_PATH . '/banners');
 define('PAGES_UPLOAD', UPLOADS_PATH . '/pages');
 define('GALLERY_UPLOAD', UPLOADS_PATH . '/gallery');
 
-// Branding
+// Branding - Aligned with official SIPWAY logo colors
 define('SITE_NAME', 'SIPWAY Higher Education');
 define('SITE_TAGLINE', 'Excellence in Higher Education');
-define('PRIMARY_COLOR', '#E31E36');
-define('SECONDARY_COLOR', '#000000');
+define('PRIMARY_COLOR', '#432774');      // Royal Purple (සිප්වේ Text & Cap)
+define('SECONDARY_COLOR', '#FFDE00');    // Vibrant Golden Yellow (Logo Badge)
+define('ACCENT_COLOR', '#E43230');       // Crimson Red (The Leader Ribbon)
 
 // Timezone
 date_default_timezone_set('Asia/Colombo');

@@ -4,8 +4,11 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
 <nav class="navbar navbar-expand-lg navbar-dark sticky-top sipway-navbar">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="<?php echo asset('index.php'); ?>">
-            <img src="<?php echo asset($logoPath); ?>" alt="SIPWAY Higher Education" class="logo-img" height="48" onerror="this.src='<?php echo asset('assets/images/logo-placeholder.png'); ?>'">
-            <span class="ms-2 brand-text d-none d-sm-inline">SIPWAY HIGHER EDUCATION</span>
+            <img src="<?php echo asset($logoPath); ?>" alt="SIPWAY Higher Education" class="logo-img" height="48" onerror="this.src='<?php echo asset('assets/images/logo.svg'); ?>'">
+            <div class="brand-text-wrap ms-2 d-none d-sm-flex flex-column">
+                <span class="brand-title">SIPWAY</span>
+                <span class="brand-subtitle">HIGHER EDUCATION</span>
+            </div>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -27,11 +30,16 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActive('contact.php'); ?>" href="<?php echo asset('contact.php'); ?>">Contact</a>
                 </li>
-                <li class="nav-item ms-lg-3">
+                <li class="nav-item ms-lg-3 my-2 my-lg-0">
                     <form class="d-flex search-form" action="<?php echo asset('search.php'); ?>" method="GET">
                         <input class="form-control form-control-sm" type="search" name="q" placeholder="Search..." aria-label="Search" value="<?php echo e($_GET['q'] ?? ''); ?>">
-                        <button class="btn btn-sm btn-outline-light ms-1" type="submit"><i class="bi bi-search"></i></button>
+                        <button class="btn btn-sm btn-search ms-1" type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
                     </form>
+                </li>
+                <li class="nav-item ms-lg-2 d-none d-xl-block">
+                    <a href="<?php echo asset('classes.php'); ?>" class="btn btn-sm btn-nav-cta">
+                        <i class="bi bi-mortarboard-fill me-1"></i> Enroll Now
+                    </a>
                 </li>
             </ul>
         </div>

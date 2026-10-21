@@ -1,4 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
-  <rect width="200" height="60" fill="#E31E36" rx="4"/>
-  <text x="100" y="38" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#fff" text-anchor="middle">SIPWAY</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="70" viewBox="0 0 240 70">
+  <defs>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#432774"/>
+      <stop offset="100%" stop-color="#2D1654"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Badge -->
+  <rect width="240" height="70" rx="10" fill="#FFDE00"/>
+  <!-- Sinhala / English Brand Mark -->
+  <g transform="translate(18, 12)">
+    <!-- Graduation Cap Icon -->
+    <path d="M56 4 L74 11 L56 18 L38 11 Z" fill="#432774"/>
+    <path d="M43 14 L43 20 C43 24 69 24 69 20 L69 14" fill="none" stroke="#432774" stroke-width="2"/>
+    <path d="M72 12 L72 23" fill="none" stroke="#E43230" stroke-width="2"/>
+    <circle cx="72" cy="24" r="2" fill="#E43230"/>
+    <!-- Brand Text "SIPWAY" in Royal Purple -->
+    <text x="100" y="27" font-family="'Poppins', 'Arial Black', sans-serif" font-size="24" font-weight="900" fill="#432774" letter-spacing="2" text-anchor="middle">SIPWAY</text>
+  </g>
+  <!-- Red Pill Ribbon: "The Leader in Higher Education" -->
+  <rect x="20" y="44" width="200" height="18" rx="9" fill="#E43230"/>
+  <text x="120" y="56.5" font-family="'Inter', Arial, sans-serif" font-size="9.5" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.3">THE LEADER IN HIGHER EDUCATION</text>
 </svg>

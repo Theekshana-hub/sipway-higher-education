@@ -1,6 +1,10 @@
-/* SIPWAY Higher Education - Main Stylesheet (Enhanced with Animations) */
+/* SIPWAY Higher Education - Main Stylesheet (Enhanced with Animations)
+   Colors matched to official logo
+*/
 :root {
-    --sipway-red: #E31E36;
+    --sipway-yellow: #FFFF00;
+    --sipway-purple: #432774;
+    --sipway-red: #E2282A;
     --sipway-black: #000000;
     --sipway-white: #FFFFFF;
     --sipway-light-gray: #F5F5F5;
@@ -39,7 +43,7 @@ a {
 }
 
 a:hover {
-    color: #c01a2e;
+    color: #c01f26;
 }
 
 /* ========== KEYFRAME ANIMATIONS ========== */
@@ -118,10 +122,10 @@ a:hover {
 
 @keyframes glow {
     0%, 100% {
-        box-shadow: 0 0 5px rgba(227, 30, 54, 0.3);
+        box-shadow: 0 0 5px rgba(226, 40, 42, 0.3);
     }
     50% {
-        box-shadow: 0 0 20px rgba(227, 30, 54, 0.6);
+        box-shadow: 0 0 20px rgba(226, 40, 42, 0.6);
     }
 }
 
@@ -314,10 +318,10 @@ a:hover {
 }
 
 .btn-sipway:hover {
-    background: #c01a2e;
+    background: #c01f26;
     color: var(--sipway-white);
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(227,30,54,0.4);
+    box-shadow: 0 8px 25px rgba(226,40,42,0.4);
 }
 
 .btn-sipway:hover::before {
@@ -378,6 +382,24 @@ a:hover {
     box-shadow: 0 6px 18px rgba(0,0,0,0.25);
 }
 
+/* Purple accent button (new - matches logo text color) */
+.btn-purple-sipway {
+    background: var(--sipway-purple);
+    color: var(--sipway-white);
+    border: none;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    border-radius: 50px;
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-purple-sipway:hover {
+    background: #35205c;
+    color: var(--sipway-white);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(67,39,116,0.4);
+}
+
 /* ========== HERO SECTION ========== */
 .hero-section {
     background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2d0a0f 100%);
@@ -394,7 +416,7 @@ a:hover {
     right: -20%;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(227,30,54,0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(226,40,42,0.15) 0%, transparent 70%);
     border-radius: 50%;
     animation: float 8s ease-in-out infinite;
 }
@@ -436,7 +458,7 @@ a:hover {
 
 .hero-image-wrapper:hover img {
     transform: scale(1.03) translateY(-5px);
-    box-shadow: 0 25px 70px rgba(227,30,54,0.25);
+    box-shadow: 0 25px 70px rgba(226,40,42,0.25);
 }
 
 /* ========== SECTION TITLES ========== */
@@ -529,7 +551,7 @@ a:hover {
 }
 
 .sipway-card .badge-category {
-    background: rgba(227,30,54,0.1);
+    background: rgba(226,40,42,0.1);
     color: var(--sipway-red);
     font-weight: 500;
     font-size: 0.75rem;
@@ -563,7 +585,7 @@ a:hover {
 .teacher-card:hover .teacher-img {
     border-color: var(--sipway-red);
     transform: scale(1.08);
-    box-shadow: 0 0 0 6px rgba(227,30,54,0.15);
+    box-shadow: 0 0 0 6px rgba(226,40,42,0.15);
 }
 
 .teacher-card h5 {
@@ -635,7 +657,7 @@ a:hover {
 .feature-box .icon-wrap {
     width: 70px;
     height: 70px;
-    background: rgba(227,30,54,0.1);
+    background: rgba(226,40,42,0.1);
     color: var(--sipway-red);
     border-radius: 50%;
     display: flex;
@@ -650,7 +672,7 @@ a:hover {
     background: var(--sipway-red);
     color: #fff;
     transform: rotateY(360deg) scale(1.1);
-    box-shadow: 0 8px 20px rgba(227,30,54,0.3);
+    box-shadow: 0 8px 20px rgba(226,40,42,0.3);
 }
 
 /* ========== TESTIMONIALS ========== */
@@ -707,7 +729,7 @@ a:hover {
 .contact-info-item .icon {
     width: 48px;
     height: 48px;
-    background: rgba(227,30,54,0.1);
+    background: rgba(226,40,42,0.1);
     color: var(--sipway-red);
     border-radius: 50%;
     display: flex;
@@ -721,7 +743,7 @@ a:hover {
     background: var(--sipway-red);
     color: #fff;
     transform: scale(1.1);
-    box-shadow: 0 5px 15px rgba(227,30,54,0.3);
+    box-shadow: 0 5px 15px rgba(226,40,42,0.3);
 }
 
 /* ========== FOOTER ========== */
@@ -812,7 +834,7 @@ a:hover {
     background: var(--sipway-red);
     color: #fff;
     transform: translateY(-4px) scale(1.1);
-    box-shadow: 0 6px 15px rgba(227,30,54,0.4);
+    box-shadow: 0 6px 15px rgba(226,40,42,0.4);
 }
 
 .sipway-footer .footer-bottom {
@@ -845,7 +867,7 @@ a:hover {
     left: -10%;
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, rgba(227,30,54,0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(226,40,42,0.12) 0%, transparent 70%);
     border-radius: 50%;
     animation: float 7s ease-in-out infinite;
 }
@@ -909,7 +931,7 @@ a:hover {
 }
 
 .info-list li:hover {
-    background: rgba(227,30,54,0.04);
+    background: rgba(226,40,42,0.04);
     padding-left: 8px;
 }
 
@@ -926,7 +948,7 @@ a:hover {
 .form-control:focus,
 .form-select:focus {
     border-color: var(--sipway-red);
-    box-shadow: 0 0 0 0.2rem rgba(227,30,54,0.15);
+    box-shadow: 0 0 0 0.2rem rgba(226,40,42,0.15);
     transform: translateY(-1px);
 }
 
@@ -953,6 +975,22 @@ a:hover {
 
 .bg-sipway {
     background-color: var(--sipway-red) !important;
+}
+
+.text-purple {
+    color: var(--sipway-purple) !important;
+}
+
+.bg-purple {
+    background-color: var(--sipway-purple) !important;
+}
+
+.bg-yellow {
+    background-color: var(--sipway-yellow) !important;
+}
+
+.text-yellow {
+    color: var(--sipway-yellow) !important;
 }
 
 .section-padding {

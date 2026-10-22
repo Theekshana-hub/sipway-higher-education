@@ -11,14 +11,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST[CSRF_TOKEN_N
         'contact_phone','contact_email','contact_address','contact_whatsapp',
         'facebook_url','twitter_url','instagram_url','linkedin_url','footer_text',
         'meta_title','meta_description','site_name','site_tagline'];
+
     foreach ($fields as $key) {
-        if (isset($_POST[$key])) {
+        if (isset($_POST[$key]) && is_string($_POST[$key])) {
             setSetting($key, trim($_POST[$key]));
         }
-    }
-    if (!empty($_FILES['hero_image']['name'])) {
-        $up = uploadImage($_FILES['hero_image'], BANNERS_UPLOAD, 'hero_');
-        if ($up['success']) setSetting('hero_image', $up['path']);
     }
     logActivity('settings_update', 'Site content updated');
     redirect(BASE_URL . '/admin/site-content.php', 'Content saved successfully.');
@@ -28,7 +25,7 @@ $pageTitle = 'Site Content';
 include __DIR__ . '/includes/header.php';
 ?>
 <h4 class="mb-4">Website Content Management</h4>
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" action="<?php echo BASE_URL; ?>/admin/site-content.php">
 <?php echo csrfField(); ?>
 <div class="admin-card card mb-4"><div class="card-header">Hero Section</div><div class="card-body row g-3">
 <div class="col-md-12"><label class="form-label">Heading</label><input type="text" name="hero_heading" class="form-control" value="<?php echo e(getSetting('hero_heading')); ?>"></div>
@@ -37,8 +34,9 @@ include __DIR__ . '/includes/header.php';
 <div class="col-md-3"><label class="form-label">Primary CTA Link</label><input type="text" name="hero_cta_primary_link" class="form-control" value="<?php echo e(getSetting('hero_cta_primary_link')); ?>"></div>
 <div class="col-md-3"><label class="form-label">Secondary CTA Label</label><input type="text" name="hero_cta_secondary" class="form-control" value="<?php echo e(getSetting('hero_cta_secondary')); ?>"></div>
 <div class="col-md-3"><label class="form-label">Secondary CTA Link</label><input type="text" name="hero_cta_secondary_link" class="form-control" value="<?php echo e(getSetting('hero_cta_secondary_link')); ?>"></div>
-<div class="col-md-6"><label class="form-label">Hero Image</label><input type="file" name="hero_image" class="form-control" accept="image/*">
-<?php if ($hi = getSetting('hero_image')): ?><img src="<?php echo getImageUrl($hi); ?>" height="60" class="mt-2"><?php endif; ?></div>
+<div class="col-md-6"><label class="form-label">Hero Image (current)</label>
+<div class="form-text mb-2">Image upload is disabled on this host (multipart forms are blocked).</div>
+<?php if ($hi = getSetting('hero_image')): ?><img src="<?php echo getImageUrl($hi); ?>" height="60"><?php endif; ?></div>
 </div></div>
 
 <div class="admin-card card mb-4"><div class="card-header">About & Vision</div><div class="card-body row g-3">
@@ -77,4 +75,5 @@ include __DIR__ . '/includes/header.php';
 
 <button type="submit" class="btn btn-admin btn-lg">Save All Content</button>
 </form>
+
 <?php include __DIR__ . '/includes/footer.php'; ?>

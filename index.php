@@ -70,6 +70,36 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
+<!-- About Preview -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="section-title">About <span class="highlight">SIPWAY</span></h2>
+                <p class="mb-4"><?php echo e(getSetting('about_intro')); ?></p>
+                <a href="<?php echo asset('about.php'); ?>" class="btn btn-outline-sipway">Learn More About Us</a>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="feature-box">
+                            <div class="icon-wrap"><i class="fas fa-eye"></i></div>
+                            <h5>Our Vision</h5>
+                            <p class="small mb-0"><?php echo e(truncate(getSetting('vision'), 80)); ?></p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="feature-box">
+                            <div class="icon-wrap"><i class="fas fa-bullseye"></i></div>
+                            <h5>Our Mission</h5>
+                            <p class="small mb-0"><?php echo e(truncate(getSetting('mission'), 80)); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Featured Classes -->
 <section class="section-padding bg-light-gray">

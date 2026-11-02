@@ -211,31 +211,7 @@ include __DIR__ . '/includes/header.php';
 
 
 <?php if (!empty($upcomingClasses)): ?>
-<section class="section-padding">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">Upcoming <span class="highlight">Classes</span></h2>
-        </div>
-        <div class="row g-4">
-            <?php foreach ($upcomingClasses as $class): ?>
-                <div class="col-md-4">
-                    <div class="card sipway-card">
-                        <div class="card-body">
-                            <h5 class="card-title"><?php echo e($class['title']); ?></h5>
-                            <?php if ($class['start_date']): ?>
-                                <p class="small text-muted"><i class="bi bi-calendar"></i> Starts <?php echo formatDate($class['start_date']); ?></p>
-                            <?php endif; ?>
-                            <?php if ($class['teacher_name']): ?>
-                                <p class="small"><i class="bi bi-person"></i> <?php echo e($class['teacher_name']); ?></p>
-                            <?php endif; ?>
-                            <a href="<?php echo asset('class-details.php?id=' . $class['id']); ?>" class="btn btn-sm btn-sipway">Learn More</a>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
+
 <?php endif; ?>
 
 <!-- Contact CTA -->

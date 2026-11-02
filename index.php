@@ -176,36 +176,36 @@ include __DIR__ . '/includes/header.php';
             <h2 class="section-title"><?php echo e(getSetting('why_choose_title', 'Why Choose Our A/L Classes')); ?></h2>
             <p class="section-subtitle"><?php echo e(getSetting('why_choose_content', 'Best guidance and support for Advanced Level students to achieve higher results')); ?></p>
         </div>
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-box">
-                    <div class="icon-wrap"><i class="fas fa-chalkboard-teacher"></i></div>
-                    <h5>Experienced A/L Teachers</h5>
-                    <p class="small mb-0">Subject specialists with years of experience in teaching Advanced Level students.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-box">
-                    <div class="icon-wrap"><i class="fas fa-book-open"></i></div>
-                    <h5>Exam-Focused Curriculum</h5>
-                    <p class="small mb-0">Complete coverage of A/L syllabus with past paper discussions and model questions.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-box">
-                    <div class="icon-wrap"><i class="fas fa-users"></i></div>
-                    <h5>Small Group Classes</h5>
-                    <p class="small mb-0">Personal attention and individual support to improve weak areas of every student.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-box">
-                    <div class="icon-wrap"><i class="fas fa-trophy"></i></div>
-                    <h5>Proven Results</h5>
-                    <p class="small mb-0">Many of our students achieve A and B grades and get selected to top universities.</p>
-                </div>
-            </div>
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-box">
+            <div class="icon-wrap"><i class="fas fa-chalkboard-teacher"></i></div>
+            <h5>Experienced A/L Teachers</h5>
+            <p class="small mb-0">Subject specialists with years of experience teaching Advanced Level students.</p>
         </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-box">
+            <div class="icon-wrap"><i class="fas fa-book-open"></i></div>
+            <h5>Exam-Focused Teaching</h5>
+            <p class="small mb-0">Complete syllabus coverage with past papers, model questions and marking schemes.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-box">
+            <div class="icon-wrap"><i class="fas fa-building"></i></div>
+            <h5>Hall Classes</h5>
+            <p class="small mb-0">Well-organized large hall classes designed for effective learning and better interaction.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="feature-box">
+            <div class="icon-wrap"><i class="fas fa-trophy"></i></div>
+            <h5>Proven Results</h5>
+            <p class="small mb-0">Many of our students achieve A and B grades and get selected to top universities.</p>
+        </div>
+    </div>
+</div>
     </div>
 </section>
 

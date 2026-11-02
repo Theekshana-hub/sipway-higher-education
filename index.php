@@ -5,7 +5,6 @@ require_once __DIR__ . '/functions.php';
 
 $pdo = getDB();
 
-// Featured classes
 $stmt = $pdo->query("SELECT c.*, t.full_name as teacher_name, cat.name as category_name 
     FROM classes c 
     LEFT JOIN teachers t ON c.teacher_id = t.id 
@@ -14,15 +13,15 @@ $stmt = $pdo->query("SELECT c.*, t.full_name as teacher_name, cat.name as catego
     ORDER BY c.created_at DESC LIMIT 4");
 $featuredClasses = $stmt->fetchAll();
 
-// Featured teachers
+
 $stmt = $pdo->query("SELECT * FROM teachers WHERE status = 'active' AND featured = 1 ORDER BY sort_order ASC LIMIT 4");
 $featuredTeachers = $stmt->fetchAll();
 
-// Testimonials
+
 $stmt = $pdo->query("SELECT * FROM testimonials WHERE status = 'active' ORDER BY sort_order ASC LIMIT 3");
 $testimonials = $stmt->fetchAll();
 
-// Upcoming classes
+
 $stmt = $pdo->query("SELECT c.*, t.full_name as teacher_name 
     FROM classes c 
     LEFT JOIN teachers t ON c.teacher_id = t.id 
@@ -35,7 +34,7 @@ $metaDescription = getSetting('meta_description');
 include __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Hero Section -->
+
 <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
@@ -70,38 +69,8 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- About Preview -->
-<section class="section-padding">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6 mb-4 mb-lg-0">
-                <h2 class="section-title">About <span class="highlight">SIPWAY</span></h2>
-                <p class="mb-4"><?php echo e(getSetting('about_intro')); ?></p>
-                <a href="<?php echo asset('about.php'); ?>" class="btn btn-outline-sipway">Learn More About Us</a>
-            </div>
-            <div class="col-lg-6">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="feature-box">
-                            <div class="icon-wrap"><i class="fas fa-eye"></i></div>
-                            <h5>Our Vision</h5>
-                            <p class="small mb-0"><?php echo e(truncate(getSetting('vision'), 80)); ?></p>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="feature-box">
-                            <div class="icon-wrap"><i class="fas fa-bullseye"></i></div>
-                            <h5>Our Mission</h5>
-                            <p class="small mb-0"><?php echo e(truncate(getSetting('mission'), 80)); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Featured Classes -->
+
 <section class="section-padding bg-light-gray">
     <div class="container">
         <div class="section-header">
@@ -138,7 +107,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- Featured Teachers -->
+
 <section class="section-padding">
     <div class="container">
         <div class="section-header">
@@ -168,7 +137,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- Stats -->
+
 <section class="stats-section">
     <div class="container">
         <div class="row">
@@ -200,40 +169,40 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- Why Choose -->
+
 <section class="section-padding">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title"><?php echo e(getSetting('why_choose_title', 'Why Choose SIPWAY')); ?></h2>
-            <p class="section-subtitle"><?php echo e(getSetting('why_choose_content')); ?></p>
+            <h2 class="section-title"><?php echo e(getSetting('why_choose_title', 'Why Choose Our A/L Classes')); ?></h2>
+            <p class="section-subtitle"><?php echo e(getSetting('why_choose_content', 'Best guidance and support for Advanced Level students to achieve higher results')); ?></p>
         </div>
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
                 <div class="feature-box">
                     <div class="icon-wrap"><i class="fas fa-chalkboard-teacher"></i></div>
-                    <h5>Expert Faculty</h5>
-                    <p class="small mb-0">Learn from highly qualified and experienced educators.</p>
+                    <h5>Experienced A/L Teachers</h5>
+                    <p class="small mb-0">Subject specialists with years of experience in teaching Advanced Level students.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-box">
-                    <div class="icon-wrap"><i class="fas fa-laptop-code"></i></div>
-                    <h5>Modern Curriculum</h5>
-                    <p class="small mb-0">Industry-relevant programs designed for today's job market.</p>
+                    <div class="icon-wrap"><i class="fas fa-book-open"></i></div>
+                    <h5>Exam-Focused Curriculum</h5>
+                    <p class="small mb-0">Complete coverage of A/L syllabus with past paper discussions and model questions.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-box">
                     <div class="icon-wrap"><i class="fas fa-users"></i></div>
-                    <h5>Student Support</h5>
-                    <p class="small mb-0">Dedicated guidance and support throughout your journey.</p>
+                    <h5>Small Group Classes</h5>
+                    <p class="small mb-0">Personal attention and individual support to improve weak areas of every student.</p>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-box">
-                    <div class="icon-wrap"><i class="fas fa-certificate"></i></div>
-                    <h5>Recognized Programs</h5>
-                    <p class="small mb-0">Quality education that opens doors to career opportunities.</p>
+                    <div class="icon-wrap"><i class="fas fa-trophy"></i></div>
+                    <h5>Proven Results</h5>
+                    <p class="small mb-0">Many of our students achieve A and B grades and get selected to top universities.</p>
                 </div>
             </div>
         </div>
@@ -241,8 +210,6 @@ include __DIR__ . '/includes/header.php';
 </section>
 
 
-
-<!-- Upcoming Classes -->
 <?php if (!empty($upcomingClasses)): ?>
 <section class="section-padding">
     <div class="container">

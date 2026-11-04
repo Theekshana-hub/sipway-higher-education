@@ -44,28 +44,10 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
                 </li>
 
                 <!-- Search -->
-                <li class="nav-item ms-lg-3 my-2 my-lg-0">
-                    <form class="d-flex search-form" action="<?php echo asset('search.php'); ?>" method="GET">
-                        <div class="input-group">
-                            <input class="form-control form-control-sm" 
-                                   type="search" 
-                                   name="q" 
-                                   placeholder="Search classes..." 
-                                   aria-label="Search" 
-                                   value="<?php echo e($_GET['q'] ?? ''); ?>">
-                            <button class="btn btn-sm btn-search" type="submit" aria-label="Search">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </form>
-                </li>
+               
 
                 <!-- CTA Button -->
-                <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
-                    <a href="<?php echo asset('classes.php'); ?>" class="btn btn-sm btn-nav-cta">
-                        <i class="bi bi-mortarboard-fill me-1"></i> Enroll Now
-                    </a>
-                </li>
+          
             </ul>
         </div>
     </div>

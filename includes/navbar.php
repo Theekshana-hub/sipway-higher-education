@@ -43,10 +43,7 @@ $logoPath = getSetting('logo_path', 'assets/images/logo.png');
                     <a class="nav-link <?php echo isActive('contact.php'); ?>" href="<?php echo asset('contact.php'); ?>">Contact</a>
                 </li>
 
-                <!-- Search -->
                
-
-                <!-- CTA Button -->
           
             </ul>
         </div>

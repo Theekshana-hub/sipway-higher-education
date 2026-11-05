@@ -4,27 +4,74 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/functions.php';
 
 $pdo = getDB();
-$search    = trim($_GET['q'] ?? '');
-$subjectId = (int)($_GET['subject'] ?? 0);
-$page      = max(1, (int)($_GET['page'] ?? 1));
-$perPage   = 12;
+$search     = trim($_GET['q'] ?? '');
+$categoryId = (int)($_GET['category'] ?? 0);
+$subjectId  = (int)($_GET['subject'] ?? 0);
+$page       = max(1, (int)($_GET['page'] ?? 1));
+$perPage    = 12;
 
 function hasCol(PDO $pdo, $table, $col) {
     $s = $pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $pdo->quote($col));
     return (bool)$s->fetch();
 }
+
 function clUrl(array $over = []) {
-    global $search, $subjectId;
-    $q = array_merge(['q' => $search, 'subject' => $subjectId ?: '', 'page' => ''], $over);
+    global $search, $categoryId, $subjectId;
+    $q = array_merge([
+        'q'        => $search,
+        'category' => $categoryId ?: '',
+        'subject'  => $subjectId ?: '',
+        'page'     => ''
+    ], $over);
     $q = array_filter($q, fn($v) => $v !== '' && $v !== null && $v !== 0);
     return asset('classes.php') . ($q ? '?' . http_build_query($q) : '');
 }
 
-$subjects = $pdo->query("SELECT id, name FROM subjects WHERE status = 'active' ORDER BY name ASC")->fetchAll();
-$subjectNames = [];
-foreach ($subjects as $s) { $subjectNames[(int)$s['id']] = $s['name']; }
-if ($subjectId && !isset($subjectNames[$subjectId])) { $subjectId = 0; }
+/* ---------- Load Categories (with hierarchy) ---------- */
+$allCategories = $pdo->query("
+    SELECT id, name, parent_id, sort_order 
+    FROM categories 
+    WHERE status = 'active' 
+    ORDER BY sort_order, name
+")->fetchAll();
 
+$topCategories = [];
+$subCategories = [];
+foreach ($allCategories as $cat) {
+    if (empty($cat['parent_id'])) {
+        $topCategories[] = $cat;
+    } else {
+        $subCategories[$cat['parent_id']][] = $cat;
+    }
+}
+
+/* ---------- Load Subjects ---------- */
+$subjects = $pdo->query("SELECT id, name, category_id FROM subjects WHERE status = 'active' ORDER BY name ASC")->fetchAll();
+$subjectNames = [];
+$subjectsByCategory = [];
+foreach ($subjects as $s) {
+    $subjectNames[(int)$s['id']] = $s['name'];
+    if ($s['category_id']) {
+        $subjectsByCategory[$s['category_id']][] = $s;
+    }
+}
+
+// Validate selected category / subject
+if ($categoryId) {
+    $validCat = false;
+    foreach ($allCategories as $c) {
+        if ((int)$c['id'] === $categoryId) {
+            $validCat = true;
+            break;
+        }
+    }
+    if (!$validCat) $categoryId = 0;
+}
+if ($subjectId && !isset($subjectNames[$subjectId])) {
+    $subjectId = 0;
+}
+
+/* ---------- Detect relation mode ---------- */
 $mode = 'none';
 if (hasCol($pdo, 'classes', 'subject_id')) {
     $mode = 'direct';
@@ -40,7 +87,10 @@ if ($mode === 'direct') {
     $selectSubject = "s.name AS subject_name";
     $joinSubject   = "LEFT JOIN subjects s ON c.subject_id = s.id";
 } elseif ($mode === 'teacher') {
-    $selectSubject = "(SELECT s2.name FROM teacher_subjects ts2 JOIN subjects s2 ON s2.id = ts2.subject_id WHERE ts2.teacher_id = c.teacher_id ORDER BY s2.id LIMIT 1) AS subject_name";
+    $selectSubject = "(SELECT s2.name FROM teacher_subjects ts2 
+                       JOIN subjects s2 ON s2.id = ts2.subject_id 
+                       WHERE ts2.teacher_id = c.teacher_id 
+                       ORDER BY s2.id LIMIT 1) AS subject_name";
 }
 
 $selectTeacher = "NULL AS teacher_name, NULL AS teacher_image";
@@ -62,13 +112,53 @@ if (hasCol($pdo, 'classes', 'teacher_id')) {
     }
 }
 
+/* ---------- Build WHERE ---------- */
 $where  = ["c.status = 'published'"];
 $params = [];
+
 if ($search !== '') {
     $where[]  = "(c.title LIKE ? OR c.description LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
+
+// Category filter (includes sub-categories)
+if ($categoryId) {
+    // Get all category IDs under this category (itself + children)
+    $catIds = [$categoryId];
+    if (isset($subCategories[$categoryId])) {
+        foreach ($subCategories[$categoryId] as $sub) {
+            $catIds[] = (int)$sub['id'];
+        }
+    }
+
+    // Get all subject IDs under these categories
+    $subjectIdsUnderCat = [];
+    foreach ($subjects as $s) {
+        if (in_array((int)$s['category_id'], $catIds)) {
+            $subjectIdsUnderCat[] = (int)$s['id'];
+        }
+    }
+
+    if (!empty($subjectIdsUnderCat)) {
+        if ($mode === 'direct') {
+            $placeholders = implode(',', array_fill(0, count($subjectIdsUnderCat), '?'));
+            $where[] = "c.subject_id IN ($placeholders)";
+            $params = array_merge($params, $subjectIdsUnderCat);
+        } elseif ($mode === 'teacher') {
+            $placeholders = implode(',', array_fill(0, count($subjectIdsUnderCat), '?'));
+            $where[] = "c.teacher_id IN (
+                SELECT teacher_id FROM teacher_subjects WHERE subject_id IN ($placeholders)
+            )";
+            $params = array_merge($params, $subjectIdsUnderCat);
+        }
+    } else {
+        // No subjects under this category → show nothing
+        $where[] = "1 = 0";
+    }
+}
+
+// Subject filter (more specific)
 if ($subjectId) {
     if ($mode === 'direct') {
         $where[]  = "c.subject_id = ?";
@@ -78,8 +168,10 @@ if ($subjectId) {
         $params[] = $subjectId;
     }
 }
+
 $whereClause = implode(' AND ', $where);
 
+/* ---------- Count + Fetch ---------- */
 $countStmt = $pdo->prepare("SELECT COUNT(*) FROM classes c WHERE $whereClause");
 $countStmt->execute($params);
 $total      = (int)$countStmt->fetchColumn();
@@ -97,7 +189,18 @@ $stmt = $pdo->prepare("SELECT c.*, $selectSubject, $selectTeacher
 $stmt->execute($params);
 $classes = $stmt->fetchAll();
 
-$activeSubjectName = $subjectId ? ($subjectNames[$subjectId] ?? '') : '';
+/* ---------- Active labels ---------- */
+$activeCategoryName = '';
+$activeSubjectName  = $subjectId ? ($subjectNames[$subjectId] ?? '') : '';
+
+if ($categoryId) {
+    foreach ($allCategories as $c) {
+        if ((int)$c['id'] === $categoryId) {
+            $activeCategoryName = $c['name'];
+            break;
+        }
+    }
+}
 
 $pageTitle = 'Classes';
 include __DIR__ . '/includes/header.php';
@@ -112,6 +215,21 @@ include __DIR__ . '/includes/header.php';
     .cl-side h5 { font-size:15px; font-weight:700; color:var(--ink); margin:0 0 12px; display:flex; align-items:center; gap:10px; }
     .cl-side h5 i { width:30px; height:30px; border-radius:9px; background:var(--red-soft); color:var(--red); display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
     .cl-side h5.mt { margin-top:26px; padding-top:24px; border-top:1px solid var(--line); }
+
+    .cl-cat-list { list-style:none; padding:0; margin:0 0 8px; }
+    .cl-cat-list li { margin-bottom:4px; }
+    .cl-cat-list a {
+        display:flex; align-items:center; gap:8px;
+        padding:10px 12px; border-radius:10px;
+        color:var(--ink); text-decoration:none; font-size:14.5px; font-weight:500;
+        transition:background .15s, color .15s;
+    }
+    .cl-cat-list a:hover { background:var(--red-soft); color:var(--red); }
+    .cl-cat-list a.active { background:var(--red); color:#fff; font-weight:600; }
+    .cl-cat-list a.active i { color:#fff; }
+    .cl-cat-list .sub { padding-left:28px; font-size:13.5px; }
+    .cl-cat-list .sub a { padding:8px 12px; }
+
     .cl-select { width:100%; appearance:none; -webkit-appearance:none; border:1px solid var(--line); border-radius:12px; padding:13px 44px 13px 16px; font-size:15px; font-family:inherit; color:var(--ink); background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23E31E24' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 16px center; cursor:pointer; outline:none; transition:border-color .2s, box-shadow .2s; }
     .cl-select:focus { border-color:var(--red); box-shadow:0 0 0 4px var(--red-soft); }
     .cl-clear { display:inline-flex; align-items:center; gap:6px; margin-top:14px; color:var(--red); font-size:14px; font-weight:600; text-decoration:none; }
@@ -142,119 +260,131 @@ include __DIR__ . '/includes/header.php';
     .cl-body { padding:20px 22px 22px; display:flex; flex-direction:column; flex:1; }
     .cl-cat { display:inline-flex; align-self:flex-start; background:var(--red-soft); color:var(--red); font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:999px; align-items:center; margin-bottom:12px; }
 
-    /* Teacher row - image + name (space next to title area) */
-    .cl-teacher {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 10px;
-    }
-    .cl-teacher-img {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        object-fit: cover;
-        flex-shrink: 0;
-        border: 2px solid #e5e7eb;
-        background: #f3f4f6;
-        box-shadow: 0 2px 6px rgba(0,0,0,.08);
-    }
-    .cl-teacher-fallback {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: var(--red-soft);
-        color: var(--red);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
-        border: 2px solid #fdecec;
-    }
-    .cl-teacher-name {
-        font-size: 14.5px;
-        font-weight: 600;
-        color: var(--ink);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    .cl-teacher { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .cl-teacher-img { width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid #e5e7eb; background:#f3f4f6; box-shadow:0 2px 6px rgba(0,0,0,.08); }
+    .cl-teacher-fallback { width:44px; height:44px; border-radius:50%; background:var(--red-soft); color:var(--red); display:inline-flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; border:2px solid #fdecec; }
+    .cl-teacher-name { font-size:14.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    .cl-title { font-size: 20px; font-weight: 800; color: var(--ink); margin: 0 0 6px; line-height: 1.3; letter-spacing: -.2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .cl-sub-t { color: var(--muted); font-size: 14px; font-weight: 500; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cl-desc { color: #555b66; font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .cl-title { font-size:20px; font-weight:800; color:var(--ink); margin:0 0 6px; line-height:1.3; letter-spacing:-.2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .cl-sub-t { color:var(--muted); font-size:14px; font-weight:500; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cl-desc { color:#555b66; font-size:15px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-    .cl-meta { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--line); margin-top: auto; padding-top: 16px; }
-    .cl-meta-wrap { margin-top: 16px; display: flex; flex-direction: column; flex: 1; justify-content: flex-end; }
-    .cl-dur { color: var(--muted); font-size: 14.5px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-    .cl-dur i { color: var(--red); }
-    .cl-price { color: var(--ink); font-size: 20px; font-weight: 800; }
-    .cl-price.free { color: #16a34a; }
+    .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); margin-top:auto; padding-top:16px; }
+    .cl-meta-wrap { margin-top:16px; display:flex; flex-direction:column; flex:1; justify-content:flex-end; }
+    .cl-dur { color:var(--muted); font-size:14.5px; font-weight:500; display:flex; align-items:center; gap:8px; }
+    .cl-dur i { color:var(--red); }
+    .cl-price { color:var(--ink); font-size:20px; font-weight:800; }
+    .cl-price.free { color:#16a34a; }
 
     .cl-actions .det {
-        flex: 1;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        background: linear-gradient(135deg, #E31E24, #B91C1C);
-        color: #ffffff;
-        border: none;
-        font-size: 15px;
-        font-weight: 700;
-        padding: 14px 20px;
-        border-radius: 12px;
-        text-decoration: none;
-        box-shadow: 0 6px 18px rgba(227, 30, 36, 0.3);
-        transition: all 0.3s ease;
-        cursor: pointer;
+        flex:1; display:inline-flex; align-items:center; justify-content:center; text-align:center;
+        background:linear-gradient(135deg, #E31E24, #B91C1C); color:#ffffff; border:none;
+        font-size:15px; font-weight:700; padding:14px 20px; border-radius:12px; text-decoration:none;
+        box-shadow:0 6px 18px rgba(227,30,36,.3); transition:all .3s ease; cursor:pointer;
     }
     .cl-actions .det:hover {
-        background: linear-gradient(135deg, #B91C1C, #991B1B);
-        color: #ffffff;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(227, 30, 36, 0.4);
+        background:linear-gradient(135deg, #B91C1C, #991B1B); color:#ffffff;
+        transform:translateY(-3px); box-shadow:0 10px 25px rgba(227,30,36,.4);
     }
 
-    .cl-empty { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 70px 20px; text-align: center; color: var(--muted); }
-    .cl-empty i { font-size: 40px; color: var(--red); margin-bottom: 16px; }
-    .cl-empty h4 { margin: 0 0 6px; color: var(--ink); font-size: 20px; font-weight: 700; }
-    .cl-empty p { margin: 0; }
+    .cl-empty { background:#fff; border:1px solid var(--line); border-radius:20px; padding:70px 20px; text-align:center; color:var(--muted); }
+    .cl-empty i { font-size:40px; color:var(--red); margin-bottom:16px; }
+    .cl-empty h4 { margin:0 0 6px; color:var(--ink); font-size:20px; font-weight:700; }
+    .cl-empty p { margin:0; }
 
-    .cl-pager { display: flex; justify-content: center; gap: 8px; margin-top: 40px; flex-wrap: wrap; }
-    .cl-pager a, .cl-pager span { min-width: 42px; height: 42px; padding: 0 12px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #fff; border: 1px solid var(--line); color: #444; text-decoration: none; font-weight: 600; transition: border-color .2s, color .2s; }
-    .cl-pager a:hover { border-color: var(--red); color: var(--red); }
-    .cl-pager .cur { background: var(--red); border-color: var(--red); color: #fff; }
-    .cl-pager .dis { opacity: .4; }
+    .cl-pager { display:flex; justify-content:center; gap:8px; margin-top:40px; flex-wrap:wrap; }
+    .cl-pager a, .cl-pager span { min-width:42px; height:42px; padding:0 12px; display:flex; align-items:center; justify-content:center; border-radius:12px; background:#fff; border:1px solid var(--line); color:#444; text-decoration:none; font-weight:600; transition:border-color .2s, color .2s; }
+    .cl-pager a:hover { border-color:var(--red); color:var(--red); }
+    .cl-pager .cur { background:var(--red); border-color:var(--red); color:#fff; }
+    .cl-pager .dis { opacity:.4; }
 
-    .cl-card a:focus-visible, .cl-pager a:focus-visible, .cl-clear:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+    .cl-card a:focus-visible, .cl-pager a:focus-visible, .cl-clear:focus-visible { outline:3px solid var(--red); outline-offset:2px; }
 
-    @media (max-width:1100px) { .cl-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width:860px) { .cl-wrap { grid-template-columns: 1fr; } .cl-side { position: static; } }
-    @media (max-width:560px) { .cl-grid { grid-template-columns: 1fr; } .cl-head h1 { font-size: 26px; } }
-    @media (prefers-reduced-motion: reduce) { .cl-card, .cl-img img, .cl-actions .det { transition: none; } .cl-card:hover { transform: none; } .cl-card:hover .cl-img img { transform: none; } }
+    @media (max-width:1100px) { .cl-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media (max-width:860px) { .cl-wrap { grid-template-columns:1fr; } .cl-side { position:static; } }
+    @media (max-width:560px) { .cl-grid { grid-template-columns:1fr; } .cl-head h1 { font-size:26px; } }
+    @media (prefers-reduced-motion: reduce) { .cl-card, .cl-img img, .cl-actions .det { transition:none; } .cl-card:hover { transform:none; } .cl-card:hover .cl-img img { transform:none; } }
 </style>
 
 <div class="cl-page">
 <div class="cl-wrap">
     <aside class="cl-side">
-        <h5><i class="fa-solid fa-filter"></i> Subjects</h5>
+        <!-- Categories -->
+        <h5><i class="fa-solid fa-layer-group"></i> Categories</h5>
+        <ul class="cl-cat-list">
+            <li>
+                <a href="<?php echo clUrl(['category' => '', 'subject' => '', 'page' => 1]); ?>" 
+                   class="<?php echo !$categoryId ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-border-all"></i> All Categories
+                </a>
+            </li>
+            <?php foreach ($topCategories as $cat): 
+                $isActive = $categoryId === (int)$cat['id'];
+                $hasSubs  = !empty($subCategories[$cat['id']]);
+            ?>
+                <li>
+                    <a href="<?php echo clUrl(['category' => $cat['id'], 'subject' => '', 'page' => 1]); ?>" 
+                       class="<?php echo $isActive ? 'active' : ''; ?>">
+                        <i class="fa-solid fa-folder<?php echo $isActive ? '-open' : ''; ?>"></i>
+                        <?php echo e($cat['name']); ?>
+                    </a>
+                </li>
+                <?php if ($hasSubs): ?>
+                    <?php foreach ($subCategories[$cat['id']] as $sub): 
+                        $isSubActive = $categoryId === (int)$sub['id'];
+                    ?>
+                        <li class="sub">
+                            <a href="<?php echo clUrl(['category' => $sub['id'], 'subject' => '', 'page' => 1]); ?>" 
+                               class="<?php echo $isSubActive ? 'active' : ''; ?>">
+                                <i class="fa-solid fa-angle-right"></i>
+                                <?php echo e($sub['name']); ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </ul>
+
+        <!-- Subjects (filtered by selected category) -->
+        <h5 class="mt"><i class="fa-solid fa-book"></i> Subjects</h5>
         <form method="GET" action="<?php echo asset('classes.php'); ?>" id="subjectForm">
             <?php if ($search !== ''): ?><input type="hidden" name="q" value="<?php echo e($search); ?>"><?php endif; ?>
+            <?php if ($categoryId): ?><input type="hidden" name="category" value="<?php echo $categoryId; ?>"><?php endif; ?>
             <select name="subject" class="cl-select" onchange="this.form.submit()">
                 <option value="">All Subjects</option>
-                <?php foreach ($subjects as $s): ?>
-                    <option value="<?php echo (int)$s['id']; ?>" <?php echo $subjectId === (int)$s['id'] ? 'selected' : ''; ?>><?php echo e($s['name']); ?></option>
+                <?php
+                $subjectsToShow = $subjects;
+                if ($categoryId) {
+                    // Show only subjects under selected category + its children
+                    $allowedCatIds = [$categoryId];
+                    if (isset($subCategories[$categoryId])) {
+                        foreach ($subCategories[$categoryId] as $sub) {
+                            $allowedCatIds[] = (int)$sub['id'];
+                        }
+                    }
+                    $subjectsToShow = array_filter($subjects, function($s) use ($allowedCatIds) {
+                        return in_array((int)$s['category_id'], $allowedCatIds);
+                    });
+                }
+                foreach ($subjectsToShow as $s):
+                ?>
+                    <option value="<?php echo (int)$s['id']; ?>" <?php echo $subjectId === (int)$s['id'] ? 'selected' : ''; ?>>
+                        <?php echo e($s['name']); ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
         </form>
-        <?php if ($subjectId || $search !== ''): ?>
-            <a class="cl-clear" href="<?php echo asset('classes.php'); ?>"><i class="fa-solid fa-xmark"></i> Clear filters</a>
+
+        <?php if ($categoryId || $subjectId || $search !== ''): ?>
+            <a class="cl-clear" href="<?php echo asset('classes.php'); ?>">
+                <i class="fa-solid fa-xmark"></i> Clear filters
+            </a>
         <?php endif; ?>
 
+        <!-- Search -->
         <h5 class="mt"><i class="fa-solid fa-magnifying-glass"></i> Search</h5>
         <form method="GET" action="<?php echo asset('classes.php'); ?>" class="cl-search">
+            <?php if ($categoryId): ?><input type="hidden" name="category" value="<?php echo $categoryId; ?>"><?php endif; ?>
             <?php if ($subjectId): ?><input type="hidden" name="subject" value="<?php echo $subjectId; ?>"><?php endif; ?>
             <input type="text" name="q" placeholder="Search classes..." value="<?php echo e($search); ?>">
             <button type="submit" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
@@ -267,10 +397,17 @@ include __DIR__ . '/includes/header.php';
                 <h1>Classes</h1>
                 <div class="cl-count"><?php echo $total; ?> class(es) found</div>
             </div>
-            <?php if ($activeSubjectName || $search !== ''): ?>
+            <?php if ($activeCategoryName || $activeSubjectName || $search !== ''): ?>
             <div class="cl-tags">
-                <?php if ($activeSubjectName): ?><span class="cl-tag"><i class="fa-solid fa-book"></i> <?php echo e($activeSubjectName); ?></span><?php endif; ?>
-                <?php if ($search !== ''): ?><span class="cl-tag"><i class="fa-solid fa-magnifying-glass"></i> <?php echo e($search); ?></span><?php endif; ?>
+                <?php if ($activeCategoryName): ?>
+                    <span class="cl-tag"><i class="fa-solid fa-folder"></i> <?php echo e($activeCategoryName); ?></span>
+                <?php endif; ?>
+                <?php if ($activeSubjectName): ?>
+                    <span class="cl-tag"><i class="fa-solid fa-book"></i> <?php echo e($activeSubjectName); ?></span>
+                <?php endif; ?>
+                <?php if ($search !== ''): ?>
+                    <span class="cl-tag"><i class="fa-solid fa-magnifying-glass"></i> <?php echo e($search); ?></span>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
         </div>
@@ -279,7 +416,7 @@ include __DIR__ . '/includes/header.php';
             <div class="cl-empty">
                 <i class="fa-regular fa-folder-open"></i>
                 <h4>No classes found</h4>
-                <p>Try another subject or search term.</p>
+                <p>Try another category, subject or search term.</p>
             </div>
         <?php else: ?>
         <div class="cl-grid">
@@ -308,8 +445,7 @@ include __DIR__ . '/includes/header.php';
                             <?php if (!empty($teacherImage)): ?>
                                 <img src="<?php echo getImageUrl($teacherImage); ?>" 
                                      alt="<?php echo e($teacherName); ?>" 
-                                     class="cl-teacher-img"
-                                     loading="lazy">
+                                     class="cl-teacher-img" loading="lazy">
                             <?php else: ?>
                                 <span class="cl-teacher-fallback">
                                     <i class="fa-solid fa-chalkboard-user"></i>

@@ -27,6 +27,18 @@ function clUrl(array $over = []) {
     return asset('classes.php') . ($q ? '?' . http_build_query($q) : '');
 }
 
+/* Category name eka balala icon ekak select karanawa */
+function clCatIcon($name) {
+    $n = strtolower($name);
+    if (strpos($n, '1 to 5') !== false || strpos($n, 'grade 1') !== false) return 'fa-pencil';
+    if (strpos($n, '6 to 9') !== false)  return 'fa-user-graduate';
+    if (strpos($n, 'a/l') !== false || strpos($n, 'advanced') !== false) return 'fa-building-columns';
+    if (strpos($n, 'o/l') !== false || strpos($n, 'ordinary') !== false) return 'fa-book-open';
+    if (strpos($n, 'language') !== false) return 'fa-id-card';
+    if (strpos($n, 'scholarship') !== false) return 'fa-award';
+    return 'fa-folder';
+}
+
 /* ---------- Load Categories (with hierarchy) ---------- */
 $allCategories = $pdo->query("
     SELECT id, name, parent_id, sort_order 
@@ -124,7 +136,6 @@ if ($search !== '') {
 
 // Category filter (includes sub-categories)
 if ($categoryId) {
-    // Get all category IDs under this category (itself + children)
     $catIds = [$categoryId];
     if (isset($subCategories[$categoryId])) {
         foreach ($subCategories[$categoryId] as $sub) {
@@ -132,7 +143,6 @@ if ($categoryId) {
         }
     }
 
-    // Get all subject IDs under these categories
     $subjectIdsUnderCat = [];
     foreach ($subjects as $s) {
         if (in_array((int)$s['category_id'], $catIds)) {
@@ -153,7 +163,6 @@ if ($categoryId) {
             $params = array_merge($params, $subjectIdsUnderCat);
         }
     } else {
-        // No subjects under this category → show nothing
         $where[] = "1 = 0";
     }
 }
@@ -206,40 +215,74 @@ $pageTitle = 'Classes';
 include __DIR__ . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
     .cl-page { --red:#E31E24; --red-dark:#c9181e; --red-soft:#fdecec; --ink:#16181d; --muted:#6b7280; --line:#e9eaee; --bg:#f6f7f9; font-family:'Inter',sans-serif; background:var(--bg); }
-    .cl-wrap { max-width:1280px; margin:0 auto; padding:44px 20px 80px; display:grid; grid-template-columns:280px 1fr; gap:32px; align-items:start; }
+    .cl-wrap { max-width:1280px; margin:0 auto; padding:44px 20px 80px; display:grid; grid-template-columns:290px 1fr; gap:32px; align-items:start; }
 
-    .cl-side { background:#fff; border:1px solid var(--line); border-radius:20px; padding:24px; position:sticky; top:90px; }
-    .cl-side h5 { font-size:15px; font-weight:700; color:var(--ink); margin:0 0 12px; display:flex; align-items:center; gap:10px; }
-    .cl-side h5 i { width:30px; height:30px; border-radius:9px; background:var(--red-soft); color:var(--red); display:inline-flex; align-items:center; justify-content:center; font-size:13px; }
-    .cl-side h5.mt { margin-top:26px; padding-top:24px; border-top:1px solid var(--line); }
+    /* ---------- Sidebar ---------- */
+    .cl-side { background:#fff; border:1px solid var(--line); border-radius:28px; padding:26px 20px; position:sticky; top:90px; box-shadow:0 10px 30px rgba(22,24,29,.05); }
+    .cl-side h5 { font-family:'Poppins','Inter',sans-serif; font-size:17px; font-weight:700; color:var(--ink); margin:0 0 14px; padding-bottom:12px; border-bottom:2px solid var(--line); display:flex; align-items:center; gap:10px; }
+    .cl-side h5 i { font-size:16px; color:var(--ink); }
+    .cl-side h5.mt { margin-top:26px; }
 
-    .cl-cat-list { list-style:none; padding:0; margin:0 0 8px; }
-    .cl-cat-list li { margin-bottom:4px; }
-    .cl-cat-list a {
-        display:flex; align-items:center; gap:8px;
-        padding:10px 12px; border-radius:10px;
-        color:var(--ink); text-decoration:none; font-size:14.5px; font-weight:500;
+    /* ---------- Category list ---------- */
+    .cl-cat-list { list-style:none; padding:0; margin:0 0 6px; }
+    .cl-cat-list > li { margin-bottom:4px; }
+
+    .cl-cat-row { display:flex; align-items:center; border-radius:12px; transition:background .15s, color .15s; }
+    .cl-cat-row:hover { background:var(--red-soft); }
+    .cl-cat-row.active { background:var(--red-soft); }
+
+    .cl-cat-link {
+        display:flex; align-items:center; gap:12px;
+        padding:13px 14px; border-radius:12px;
+        color:var(--ink); text-decoration:none; font-size:15px; font-weight:500;
+        flex:0 1 auto; min-width:0;
+    }
+    .cl-cat-link i { width:18px; text-align:center; font-size:14px; flex-shrink:0; }
+    .cl-cat-row:hover .cl-cat-link { color:var(--red); }
+    .cl-cat-row.active .cl-cat-link { color:var(--red); font-weight:600; }
+    .cl-cat-row.no-sub { }
+    .cl-cat-row.no-sub .cl-cat-link { flex:1; }
+
+    /* chevron button (text ekata thawa langin, ehema thiyena area eka click karanna puluwan) */
+    .cl-chev-btn {
+        flex:1; align-self:stretch; display:flex; align-items:center; justify-content:flex-start;
+        background:transparent; border:0; cursor:pointer; color:var(--ink);
+        padding:0 14px 0 2px; font-size:12px; border-radius:0 12px 12px 0;
+    }
+    .cl-cat-row:hover .cl-chev-btn, .cl-cat-row.active .cl-chev-btn { color:var(--red); }
+    .cl-chev-btn i { transition:transform .25s; }
+    .cl-chev-btn[aria-expanded="true"] i { transform:rotate(180deg); }
+    .cl-chev-btn:focus-visible, .cl-cat-link:focus-visible, .cl-sub a:focus-visible { outline:3px solid var(--red); outline-offset:2px; }
+
+    /* ---------- Sub-category dropdown ---------- */
+    .cl-sub { list-style:none; margin:4px 0 6px; padding:0; display:none; }
+    .cl-sub.open { display:block; animation:clDrop .2s ease; }
+    @keyframes clDrop { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+    .cl-sub li { margin-bottom:2px; }
+    .cl-sub a {
+        display:flex; align-items:center; gap:12px;
+        padding:12px 14px 12px 22px; border-radius:10px;
+        color:var(--ink); text-decoration:none; font-size:15px; font-weight:500;
         transition:background .15s, color .15s;
     }
-    .cl-cat-list a:hover { background:var(--red-soft); color:var(--red); }
-    .cl-cat-list a.active { background:var(--red); color:#fff; font-weight:600; }
-    .cl-cat-list a.active i { color:#fff; }
-    .cl-cat-list .sub { padding-left:28px; font-size:13.5px; }
-    .cl-cat-list .sub a { padding:8px 12px; }
+    .cl-sub a i { font-size:11px; width:12px; text-align:center; }
+    .cl-sub a:hover { background:var(--red-soft); color:var(--red); }
+    .cl-sub a.active { color:var(--red); font-weight:700; background:var(--red-soft); }
 
-    .cl-select { width:100%; appearance:none; -webkit-appearance:none; border:1px solid var(--line); border-radius:12px; padding:13px 44px 13px 16px; font-size:15px; font-family:inherit; color:var(--ink); background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23E31E24' stroke-width='3'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 16px center; cursor:pointer; outline:none; transition:border-color .2s, box-shadow .2s; }
-    .cl-select:focus { border-color:var(--red); box-shadow:0 0 0 4px var(--red-soft); }
-    .cl-clear { display:inline-flex; align-items:center; gap:6px; margin-top:14px; color:var(--red); font-size:14px; font-weight:600; text-decoration:none; }
+    .cl-clear { display:inline-flex; align-items:center; gap:6px; margin:10px 0 0 6px; color:var(--red); font-size:14px; font-weight:600; text-decoration:none; }
     .cl-clear:hover { text-decoration:underline; }
+
+    /* ---------- Search ---------- */
     .cl-search { display:flex; }
     .cl-search input { flex:1; min-width:0; border:1px solid var(--line); border-right:0; border-radius:12px 0 0 12px; padding:13px 16px; font-size:15px; outline:none; font-family:inherit; color:var(--ink); transition:border-color .2s; }
     .cl-search input:focus { border-color:var(--red); }
     .cl-search button { background:var(--red); color:#fff; border:0; width:52px; border-radius:0 12px 12px 0; cursor:pointer; font-size:15px; transition:background .2s; }
     .cl-search button:hover { background:var(--red-dark); }
 
+    /* ---------- Header + cards ---------- */
     .cl-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:26px; }
     .cl-head h1 { font-size:32px; font-weight:800; color:var(--ink); margin:0; letter-spacing:-.5px; }
     .cl-count { color:var(--muted); font-size:15px; margin-top:4px; }
@@ -303,77 +346,65 @@ include __DIR__ . '/includes/header.php';
     @media (max-width:1100px) { .cl-grid { grid-template-columns:repeat(2, 1fr); } }
     @media (max-width:860px) { .cl-wrap { grid-template-columns:1fr; } .cl-side { position:static; } }
     @media (max-width:560px) { .cl-grid { grid-template-columns:1fr; } .cl-head h1 { font-size:26px; } }
-    @media (prefers-reduced-motion: reduce) { .cl-card, .cl-img img, .cl-actions .det { transition:none; } .cl-card:hover { transform:none; } .cl-card:hover .cl-img img { transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .cl-card, .cl-img img, .cl-actions .det, .cl-chev-btn i { transition:none; } .cl-sub.open { animation:none; } .cl-card:hover { transform:none; } .cl-card:hover .cl-img img { transform:none; } }
 </style>
 
 <div class="cl-page">
 <div class="cl-wrap">
     <aside class="cl-side">
         <!-- Categories -->
-        <h5><i class="fa-solid fa-layer-group"></i> Categories</h5>
+        <h5><i class="fa-solid fa-filter"></i> Categories</h5>
         <ul class="cl-cat-list">
+
+            <!-- All Classes -->
             <li>
-                <a href="<?php echo clUrl(['category' => '', 'subject' => '', 'page' => 1]); ?>" 
-                   class="<?php echo !$categoryId ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-border-all"></i> All Categories
-                </a>
+                <div class="cl-cat-row no-sub <?php echo !$categoryId ? 'active' : ''; ?>">
+                    <a class="cl-cat-link" href="<?php echo clUrl(['category' => '', 'subject' => '', 'page' => 1]); ?>">
+                        <i class="fa-solid fa-table-cells"></i> All Classes
+                    </a>
+                </div>
             </li>
-            <?php foreach ($topCategories as $cat): 
-                $isActive = $categoryId === (int)$cat['id'];
-                $hasSubs  = !empty($subCategories[$cat['id']]);
+
+            <?php foreach ($topCategories as $cat):
+                $catId    = (int)$cat['id'];
+                $subs     = $subCategories[$catId] ?? [];
+                $hasSubs  = !empty($subs);
+                $subIds   = array_map(fn($x) => (int)$x['id'], $subs);
+                $isActive = ($categoryId === $catId) || in_array($categoryId, $subIds, true);
+                $subListId = 'cl-sub-' . $catId;
             ?>
-                <li>
-                    <a href="<?php echo clUrl(['category' => $cat['id'], 'subject' => '', 'page' => 1]); ?>" 
-                       class="<?php echo $isActive ? 'active' : ''; ?>">
-                        <i class="fa-solid fa-folder<?php echo $isActive ? '-open' : ''; ?>"></i>
+            <li>
+                <div class="cl-cat-row <?php echo $isActive ? 'active' : ''; ?> <?php echo $hasSubs ? '' : 'no-sub'; ?>">
+                    <a class="cl-cat-link" href="<?php echo clUrl(['category' => $catId, 'subject' => '', 'page' => 1]); ?>">
+                        <i class="fa-solid <?php echo clCatIcon($cat['name']); ?>"></i>
                         <?php echo e($cat['name']); ?>
                     </a>
-                </li>
+                    <?php if ($hasSubs): ?>
+                        <button type="button" class="cl-chev-btn"
+                                aria-expanded="<?php echo $isActive ? 'true' : 'false'; ?>"
+                                aria-controls="<?php echo $subListId; ?>"
+                                aria-label="Toggle <?php echo e($cat['name']); ?>">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
+
                 <?php if ($hasSubs): ?>
-                    <?php foreach ($subCategories[$cat['id']] as $sub): 
-                        $isSubActive = $categoryId === (int)$sub['id'];
-                    ?>
-                        <li class="sub">
-                            <a href="<?php echo clUrl(['category' => $sub['id'], 'subject' => '', 'page' => 1]); ?>" 
-                               class="<?php echo $isSubActive ? 'active' : ''; ?>">
-                                <i class="fa-solid fa-angle-right"></i>
-                                <?php echo e($sub['name']); ?>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
+                    <ul class="cl-sub <?php echo $isActive ? 'open' : ''; ?>" id="<?php echo $subListId; ?>">
+                        <?php foreach ($subs as $sub): ?>
+                            <li>
+                                <a href="<?php echo clUrl(['category' => (int)$sub['id'], 'subject' => '', 'page' => 1]); ?>"
+                                   class="<?php echo $categoryId === (int)$sub['id'] ? 'active' : ''; ?>">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                    <?php echo e($sub['name']); ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
                 <?php endif; ?>
+            </li>
             <?php endforeach; ?>
         </ul>
-
-        <!-- Subjects (filtered by selected category) -->
-        <h5 class="mt"><i class="fa-solid fa-book"></i> Subjects</h5>
-        <form method="GET" action="<?php echo asset('classes.php'); ?>" id="subjectForm">
-            <?php if ($search !== ''): ?><input type="hidden" name="q" value="<?php echo e($search); ?>"><?php endif; ?>
-            <?php if ($categoryId): ?><input type="hidden" name="category" value="<?php echo $categoryId; ?>"><?php endif; ?>
-            <select name="subject" class="cl-select" onchange="this.form.submit()">
-                <option value="">All Subjects</option>
-                <?php
-                $subjectsToShow = $subjects;
-                if ($categoryId) {
-                    // Show only subjects under selected category + its children
-                    $allowedCatIds = [$categoryId];
-                    if (isset($subCategories[$categoryId])) {
-                        foreach ($subCategories[$categoryId] as $sub) {
-                            $allowedCatIds[] = (int)$sub['id'];
-                        }
-                    }
-                    $subjectsToShow = array_filter($subjects, function($s) use ($allowedCatIds) {
-                        return in_array((int)$s['category_id'], $allowedCatIds);
-                    });
-                }
-                foreach ($subjectsToShow as $s):
-                ?>
-                    <option value="<?php echo (int)$s['id']; ?>" <?php echo $subjectId === (int)$s['id'] ? 'selected' : ''; ?>>
-                        <?php echo e($s['name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </form>
 
         <?php if ($categoryId || $subjectId || $search !== ''): ?>
             <a class="cl-clear" href="<?php echo asset('classes.php'); ?>">
@@ -416,7 +447,7 @@ include __DIR__ . '/includes/header.php';
             <div class="cl-empty">
                 <i class="fa-regular fa-folder-open"></i>
                 <h4>No classes found</h4>
-                <p>Try another category, subject or search term.</p>
+                <p>Try another category or search term.</p>
             </div>
         <?php else: ?>
         <div class="cl-grid">
@@ -517,4 +548,19 @@ include __DIR__ . '/includes/header.php';
     </main>
 </div>
 </div>
+
+<script>
+(function () {
+    // Chevron click => sub-categories dropdown open/close (page reload wenne na)
+    document.querySelectorAll('.cl-chev-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var list = document.getElementById(btn.getAttribute('aria-controls'));
+            if (!list) return;
+            var open = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+            list.classList.toggle('open', !open);
+        });
+    });
+})();
+</script>
 <?php include __DIR__ . '/includes/footer.php'; ?>

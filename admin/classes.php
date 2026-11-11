@@ -27,7 +27,11 @@ $countStmt->execute($params);
 $total = (int)$countStmt->fetchColumn();
 $pagination = paginate($total, $perPage, $page);
 
-$stmt = $pdo->prepare("SELECT c.*, t.full_name as teacher_name, cat.name as category_name FROM classes c LEFT JOIN teachers t ON c.teacher_id = t.id LEFT JOIN categories cat ON c.category_id = cat.id WHERE $whereClause ORDER BY c.created_at DESC LIMIT {$pagination['per_page']} OFFSET {$pagination['offset']}");
+$stmt = $pdo->prepare("SELECT c.*, t.full_name as teacher_name, cat.name as category_name,
+    (SELECT COUNT(*) FROM class_year_schedules cs WHERE cs.class_id = c.id) AS schedule_count,
+    (SELECT GROUP_CONCAT(CONCAT_WS(' ', cs.class_year, LEFT(cs.class_day,3)) ORDER BY cs.sort_order, cs.id SEPARATOR ', ') FROM class_schedules cs WHERE cs.class_id = c.id) AS schedule_summary
+    FROM classes c LEFT JOIN teachers t ON c.teacher_id = t.id LEFT JOIN categories cat ON c.category_id = cat.id
+    WHERE $whereClause ORDER BY c.created_at DESC LIMIT {$pagination['per_page']} OFFSET {$pagination['offset']}");
 $stmt->execute($params);
 $classes = $stmt->fetchAll();
 
@@ -56,16 +60,21 @@ include __DIR__ . '/includes/header.php';
 <div class="admin-card card">
     <div class="table-responsive">
         <table class="table admin-table mb-0">
-            <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Teacher</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Teacher</th><th>Schedule</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 <?php if (empty($classes)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4">No classes found.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No classes found.</td></tr>
                 <?php else: foreach ($classes as $c): ?>
                     <tr>
                         <td><img src="<?php echo getImageUrl($c['image']); ?>" width="50" height="35" style="object-fit:cover;border-radius:4px" alt=""></td>
                         <td><strong><?php echo e($c['title']); ?></strong><?php if ($c['featured']): ?> <i class="bi bi-star-fill text-warning"></i><?php endif; ?></td>
                         <td><?php echo e($c['category_name'] ?? '—'); ?></td>
                         <td><?php echo e($c['teacher_name'] ?? '—'); ?></td>
+                        <td>
+                            <?php if ((int)$c['schedule_count'] > 0): ?>
+                                <small><?php echo e($c['schedule_summary']); ?></small>
+                            <?php else: ?>—<?php endif; ?>
+                        </td>
                         <td class="text-capitalize"><?php echo e($c['class_type']); ?></td>
                         <td><span class="badge badge-status-<?php echo e($c['status']); ?>"><?php echo e($c['status']); ?></span></td>
                         <td>

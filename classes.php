@@ -198,6 +198,26 @@ $stmt = $pdo->prepare("SELECT c.*, $selectSubject, $selectTeacher
 $stmt->execute($params);
 $classes = $stmt->fetchAll();
 
+/* ---------- Load schedules (Year / Day / Time) for these classes ---------- */
+$schedulesByClass = [];
+if (!empty($classes)) {
+    try {
+        $ids = array_map(fn($r) => (int)$r['id'], $classes);
+        $ph  = implode(',', array_fill(0, count($ids), '?'));
+$ss  = $pdo->prepare("SELECT * FROM class_year_schedules WHERE class_id IN ($ph) ORDER BY sort_order, id");
+        $ss->execute($ids);
+        foreach ($ss->fetchAll() as $row) {
+            $schedulesByClass[(int)$row['class_id']][] = $row;
+        }
+    } catch (Exception $ex) {
+        $schedulesByClass = []; // table eka nathnam site eka break wenna epa
+    }
+}
+
+function clTime($t) {
+    return $t ? date('g:i A', strtotime($t)) : '';
+}
+
 /* ---------- Active labels ---------- */
 $activeCategoryName = '';
 $activeSubjectName  = $subjectId ? ($subjectNames[$subjectId] ?? '') : '';
@@ -246,7 +266,6 @@ include __DIR__ . '/includes/header.php';
     .cl-cat-row.no-sub { }
     .cl-cat-row.no-sub .cl-cat-link { flex:1; }
 
-    /* chevron button (text ekata thawa langin, ehema thiyena area eka click karanna puluwan) */
     .cl-chev-btn {
         flex:1; align-self:stretch; display:flex; align-items:center; justify-content:flex-start;
         background:transparent; border:0; cursor:pointer; color:var(--ink);
@@ -311,6 +330,14 @@ include __DIR__ . '/includes/header.php';
     .cl-title { font-size:20px; font-weight:800; color:var(--ink); margin:0 0 6px; line-height:1.3; letter-spacing:-.2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .cl-sub-t { color:var(--muted); font-size:14px; font-weight:500; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .cl-desc { color:#555b66; font-size:15px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+    /* ---------- Schedule (Year / Day / Time) ---------- */
+    .cl-schedule { display:flex; flex-direction:column; gap:8px; margin:14px 0 4px; }
+    .cl-slot { display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:#f6f7f9; border:1px solid var(--line); border-radius:12px; padding:8px 10px; }
+    .cl-chip { display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--ink); border-radius:8px; padding:5px 9px; font-size:12.5px; font-weight:600; border:1px solid var(--line); }
+    .cl-chip i { color:var(--red); font-size:11px; }
+    .cl-chip.year { background:var(--red); color:#fff; border-color:var(--red); }
+    .cl-chip.year i { color:#fff; }
 
     .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); margin-top:auto; padding-top:16px; }
     .cl-meta-wrap { margin-top:16px; display:flex; flex-direction:column; flex:1; justify-content:flex-end; }
@@ -457,6 +484,7 @@ include __DIR__ . '/includes/header.php';
                 $price = $c['price'] ?? null;
                 $teacherName = $c['teacher_name'] ?? '';
                 $teacherImage = $c['teacher_image'] ?? null;
+                $classSchedules = $schedulesByClass[(int)$c['id']] ?? [];
             ?>
             <article class="cl-card">
                 <div class="cl-img">
@@ -494,6 +522,28 @@ include __DIR__ . '/includes/header.php';
 
                     <?php if (!empty($c['description'])): ?>
                         <div class="cl-desc"><?php echo e($c['description']); ?></div>
+                    <?php endif; ?>
+
+                    <!-- Year / Day / Time (multiple) -->
+                    <?php if (!empty($classSchedules)): ?>
+                        <div class="cl-schedule">
+                            <?php foreach ($classSchedules as $sc):
+                                $t = clTime($sc['start_time']);
+                                if ($t && !empty($sc['end_time'])) { $t .= ' – ' . clTime($sc['end_time']); }
+                            ?>
+                                <div class="cl-slot">
+                                    <?php if (!empty($sc['class_year'])): ?>
+                                        <span class="cl-chip year"><i class="fa-solid fa-graduation-cap"></i> <?php echo e($sc['class_year']); ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($sc['class_day'])): ?>
+                                        <span class="cl-chip"><i class="fa-regular fa-calendar"></i> <?php echo e($sc['class_day']); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($t): ?>
+                                        <span class="cl-chip"><i class="fa-regular fa-clock"></i> <?php echo e($t); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     <?php endif; ?>
 
                     <div class="cl-meta-wrap">
@@ -551,7 +601,6 @@ include __DIR__ . '/includes/header.php';
 
 <script>
 (function () {
-    // Chevron click => sub-categories dropdown open/close (page reload wenne na)
     document.querySelectorAll('.cl-chev-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var list = document.getElementById(btn.getAttribute('aria-controls'));

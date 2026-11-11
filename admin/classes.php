@@ -29,7 +29,7 @@ $pagination = paginate($total, $perPage, $page);
 
 $stmt = $pdo->prepare("SELECT c.*, t.full_name as teacher_name, cat.name as category_name,
     (SELECT COUNT(*) FROM class_year_schedules cs WHERE cs.class_id = c.id) AS schedule_count,
-    (SELECT GROUP_CONCAT(CONCAT_WS(' ', cs.class_year, LEFT(cs.class_day,3)) ORDER BY cs.sort_order, cs.id SEPARATOR ', ') FROM class_schedules cs WHERE cs.class_id = c.id) AS schedule_summary
+    (SELECT GROUP_CONCAT(CONCAT_WS(' ', cs.class_year, LEFT(cs.class_day,3)) ORDER BY cs.sort_order, cs.id SEPARATOR ', ') FROM class_year_schedules cs WHERE cs.class_id = c.id) AS schedule_summary
     FROM classes c LEFT JOIN teachers t ON c.teacher_id = t.id LEFT JOIN categories cat ON c.category_id = cat.id
     WHERE $whereClause ORDER BY c.created_at DESC LIMIT {$pagination['per_page']} OFFSET {$pagination['offset']}");
 $stmt->execute($params);

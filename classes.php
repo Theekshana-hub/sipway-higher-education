@@ -198,19 +198,19 @@ $stmt = $pdo->prepare("SELECT c.*, $selectSubject, $selectTeacher
 $stmt->execute($params);
 $classes = $stmt->fetchAll();
 
-/* ---------- Load schedules (Year / Day / Time) for these classes ---------- */
+/* ---------- Load schedules (Year / Day / Time / Fee) for these classes ---------- */
 $schedulesByClass = [];
 if (!empty($classes)) {
     try {
         $ids = array_map(fn($r) => (int)$r['id'], $classes);
         $ph  = implode(',', array_fill(0, count($ids), '?'));
-$ss  = $pdo->prepare("SELECT * FROM class_year_schedules WHERE class_id IN ($ph) ORDER BY sort_order, id");
+        $ss  = $pdo->prepare("SELECT * FROM class_year_schedules WHERE class_id IN ($ph) ORDER BY sort_order, id");
         $ss->execute($ids);
         foreach ($ss->fetchAll() as $row) {
             $schedulesByClass[(int)$row['class_id']][] = $row;
         }
     } catch (Exception $ex) {
-        $schedulesByClass = []; // table eka nathnam site eka break wenna epa
+        $schedulesByClass = [];
     }
 }
 
@@ -331,13 +331,15 @@ include __DIR__ . '/includes/header.php';
     .cl-sub-t { color:var(--muted); font-size:14px; font-weight:500; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .cl-desc { color:#555b66; font-size:15px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-    /* ---------- Schedule (Year / Day / Time) ---------- */
+    /* ---------- Schedule (Year / Day / Time / Fee) ---------- */
     .cl-schedule { display:flex; flex-direction:column; gap:8px; margin:14px 0 4px; }
     .cl-slot { display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:#f6f7f9; border:1px solid var(--line); border-radius:12px; padding:8px 10px; }
     .cl-chip { display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--ink); border-radius:8px; padding:5px 9px; font-size:12.5px; font-weight:600; border:1px solid var(--line); }
     .cl-chip i { color:var(--red); font-size:11px; }
     .cl-chip.year { background:var(--red); color:#fff; border-color:var(--red); }
     .cl-chip.year i { color:#fff; }
+    .cl-chip.fee { background:#ecfdf3; color:#15803d; border-color:#bbf7d0; margin-left:auto; font-weight:700; }
+    .cl-chip.fee i { color:#15803d; }
 
     .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); margin-top:auto; padding-top:16px; }
     .cl-meta-wrap { margin-top:16px; display:flex; flex-direction:column; flex:1; justify-content:flex-end; }
@@ -485,6 +487,10 @@ include __DIR__ . '/includes/header.php';
                 $teacherName = $c['teacher_name'] ?? '';
                 $teacherImage = $c['teacher_image'] ?? null;
                 $classSchedules = $schedulesByClass[(int)$c['id']] ?? [];
+                $hasSlotFee = false;
+                foreach ($classSchedules as $scChk) {
+                    if ($scChk['fee'] !== null && $scChk['fee'] !== '') { $hasSlotFee = true; break; }
+                }
             ?>
             <article class="cl-card">
                 <div class="cl-img">
@@ -524,12 +530,13 @@ include __DIR__ . '/includes/header.php';
                         <div class="cl-desc"><?php echo e($c['description']); ?></div>
                     <?php endif; ?>
 
-                    <!-- Year / Day / Time (multiple) -->
+                    <!-- Year / Day / Time / Fee (multiple) -->
                     <?php if (!empty($classSchedules)): ?>
                         <div class="cl-schedule">
                             <?php foreach ($classSchedules as $sc):
                                 $t = clTime($sc['start_time']);
                                 if ($t && !empty($sc['end_time'])) { $t .= ' – ' . clTime($sc['end_time']); }
+                                $slotFee = ($sc['fee'] !== null && $sc['fee'] !== '') ? (float)$sc['fee'] : null;
                             ?>
                                 <div class="cl-slot">
                                     <?php if (!empty($sc['class_year'])): ?>
@@ -540,6 +547,9 @@ include __DIR__ . '/includes/header.php';
                                     <?php endif; ?>
                                     <?php if ($t): ?>
                                         <span class="cl-chip"><i class="fa-regular fa-clock"></i> <?php echo e($t); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($slotFee !== null): ?>
+                                        <span class="cl-chip fee"><i class="fa-solid fa-tag"></i> <?php echo $slotFee > 0 ? 'Rs. ' . number_format($slotFee) : 'Free'; ?></span>
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
@@ -553,7 +563,7 @@ include __DIR__ . '/includes/header.php';
                                     <i class="fa-regular fa-clock"></i> <?php echo e($c['duration']); ?>
                                 <?php endif; ?>
                             </span>
-                            <?php if ($price !== null): ?>
+                            <?php if ($price !== null && !$hasSlotFee): ?>
                                 <?php $isFree = !((float)$price > 0); ?>
                                 <span class="cl-price <?php echo $isFree ? 'free' : ''; ?>">
                                     <?php echo $isFree ? 'Free' : 'Rs. ' . number_format((float)$price); ?>

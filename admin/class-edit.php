@@ -11,6 +11,9 @@ if (!$class) redirect(BASE_URL . '/admin/classes.php', 'Class not found.', 'erro
 
 $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
+/* Class Year max length (DB column VARCHAR(255) wenna oni) */
+define('SCH_YEAR_MAX', 255);
+
 /* ---------- Save Schedule (this page handles it itself) ---------- */
 function schCsrfOk() {
     $html = (string)csrfField();
@@ -38,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         $ins = $pdo->prepare("INSERT INTO class_year_schedules (class_id, class_year, class_day, start_time, end_time, fee, sort_order) VALUES (?,?,?,?,?,?,?)");
         $order = 0;
         foreach ($years as $i => $y) {
-            $y  = mb_substr(trim($y), 0, 30);
+            $y  = mb_substr(trim($y), 0, SCH_YEAR_MAX);
             $d  = $dayArr[$i] ?? '';
             $d  = in_array($d, $days, true) ? $d : null;
             $st = $starts[$i] ?? '';
@@ -115,7 +118,7 @@ include __DIR__ . '/includes/header.php';
     <h5 class="mb-0">Class Schedule</h5>
     <button type="button" class="btn btn-sm btn-outline-primary" id="addSchRow">+ Add Year / Day / Time / Fee</button>
 </div>
-<p class="text-muted small">Year godak, day/time/fee godak add karanna puluwan. Ekak ekak "Remove" karanna puluwan. Ain karala <strong>Save Schedule</strong> click karanna.</p>
+<p class="text-muted small">Year godak, day/time/fee godak add karanna puluwan. Ekak ekak "✕" karanna puluwan. Ain karala <strong>Save Schedule</strong> click karanna.</p>
 
 <form method="POST" action="<?php echo asset('admin/class-edit.php?id=' . $id); ?>">
 <?php echo csrfField(); ?>
@@ -124,8 +127,8 @@ include __DIR__ . '/includes/header.php';
 <div id="schRows">
 <?php foreach ($schedules as $sc): ?>
     <div class="row g-2 align-items-end mb-2 sch-row">
-        <div class="col-md-2"><label class="form-label small">Class Year</label>
-            <input type="text" name="sch_year[]" class="form-control" maxlength="30" placeholder="e.g. 2027 A/L" value="<?php echo e($sc['class_year'] ?? ''); ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Class Year</label>
+            <input type="text" name="sch_year[]" class="form-control" maxlength="<?php echo SCH_YEAR_MAX; ?>" placeholder="e.g. 2027 A/L" value="<?php echo e($sc['class_year'] ?? ''); ?>"></div>
         <div class="col-md-2"><label class="form-label small">Class Day</label>
             <select name="sch_day[]" class="form-select"><option value="">—</option>
             <?php foreach ($days as $d): ?><option value="<?php echo $d; ?>" <?php echo ($sc['class_day'] ?? '')===$d?'selected':''; ?>><?php echo $d; ?></option><?php endforeach; ?>
@@ -136,15 +139,15 @@ include __DIR__ . '/includes/header.php';
             <input type="time" name="sch_end[]" class="form-control" value="<?php echo !empty($sc['end_time']) ? e(substr($sc['end_time'],0,5)) : ''; ?>"></div>
         <div class="col-md-2"><label class="form-label small">Fee (Rs.)</label>
             <input type="number" name="sch_fee[]" class="form-control" step="0.01" min="0" placeholder="e.g. 3000" value="<?php echo ($sc['fee'] ?? '') !== '' && $sc['fee'] !== null ? e($sc['fee']) : ''; ?>"></div>
-        <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100 sch-remove">Remove</button></div>
+        <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100 sch-remove" title="Remove">✕</button></div>
     </div>
 <?php endforeach; ?>
 </div>
 
 <template id="schTpl">
     <div class="row g-2 align-items-end mb-2 sch-row">
-        <div class="col-md-2"><label class="form-label small">Class Year</label>
-            <input type="text" name="sch_year[]" class="form-control" maxlength="30" placeholder="e.g. 2027 A/L"></div>
+        <div class="col-md-3"><label class="form-label small">Class Year</label>
+            <input type="text" name="sch_year[]" class="form-control" maxlength="<?php echo SCH_YEAR_MAX; ?>" placeholder="e.g. 2027 A/L"></div>
         <div class="col-md-2"><label class="form-label small">Class Day</label>
             <select name="sch_day[]" class="form-select"><option value="">—</option>
             <?php foreach ($days as $d): ?><option value="<?php echo $d; ?>"><?php echo $d; ?></option><?php endforeach; ?>
@@ -155,7 +158,7 @@ include __DIR__ . '/includes/header.php';
             <input type="time" name="sch_end[]" class="form-control"></div>
         <div class="col-md-2"><label class="form-label small">Fee (Rs.)</label>
             <input type="number" name="sch_fee[]" class="form-control" step="0.01" min="0" placeholder="e.g. 3000"></div>
-        <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100 sch-remove">Remove</button></div>
+        <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100 sch-remove" title="Remove">✕</button></div>
     </div>
 </template>
 

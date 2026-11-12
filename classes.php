@@ -27,7 +27,6 @@ function clUrl(array $over = []) {
     return asset('classes.php') . ($q ? '?' . http_build_query($q) : '');
 }
 
-/* Category name eka balala icon ekak select karanawa */
 function clCatIcon($name) {
     $n = strtolower($name);
     if (strpos($n, '1 to 5') !== false || strpos($n, 'grade 1') !== false) return 'fa-pencil';
@@ -238,7 +237,8 @@ include __DIR__ . '/includes/header.php';
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
     .cl-page { --red:#E31E24; --red-dark:#c9181e; --red-soft:#fdecec; --ink:#16181d; --muted:#6b7280; --line:#e9eaee; --bg:#f6f7f9; font-family:'Inter',sans-serif; background:var(--bg); }
-    .cl-wrap { max-width:1280px; margin:0 auto; padding:44px 20px 80px; display:grid; grid-template-columns:290px 1fr; gap:32px; align-items:start; }
+    .cl-wrap { max-width:1280px; margin:0 auto; padding:44px 20px 80px; display:grid; grid-template-columns:290px minmax(0,1fr); gap:32px; align-items:start; }
+    .cl-wrap > main { min-width:0; }
 
     /* ---------- Sidebar ---------- */
     .cl-side { background:#fff; border:1px solid var(--line); border-radius:28px; padding:26px 20px; position:sticky; top:90px; box-shadow:0 10px 30px rgba(22,24,29,.05); }
@@ -301,7 +301,7 @@ include __DIR__ . '/includes/header.php';
     .cl-search button { background:var(--red); color:#fff; border:0; width:52px; border-radius:0 12px 12px 0; cursor:pointer; font-size:15px; transition:background .2s; }
     .cl-search button:hover { background:var(--red-dark); }
 
-    /* ---------- Header + cards ---------- */
+    /* ---------- Header ---------- */
     .cl-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:26px; }
     .cl-head h1 { font-size:32px; font-weight:800; color:var(--ink); margin:0; letter-spacing:-.5px; }
     .cl-count { color:var(--muted); font-size:15px; margin-top:4px; }
@@ -309,73 +309,106 @@ include __DIR__ . '/includes/header.php';
     .cl-tag { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); color:var(--ink); border-radius:999px; padding:8px 14px; font-size:13.5px; font-weight:600; }
     .cl-tag i { color:var(--red); font-size:12px; }
 
-    .cl-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:26px; align-items:start; }
-    .cl-card { background:#fff; border:1px solid var(--line); border-radius:20px; overflow:hidden; display:flex; flex-direction:column; transition:transform .2s, box-shadow .2s, border-color .2s; }
-    .cl-card:hover { transform:translateY(-4px); box-shadow:0 18px 40px rgba(22,24,29,.10); border-color:transparent; }
+    /* ---------- GRID ---------- */
+    .cl-grid {
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:24px;
+        align-items:stretch;
+    }
+    .cl-card {
+        background:#fff; border:1px solid var(--line); border-radius:18px; overflow:hidden;
+        display:flex; flex-direction:column; height:100%; min-width:0;
+        transition:transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .cl-card:hover { transform:translateY(-4px); box-shadow:0 16px 36px rgba(22,24,29,.10); border-color:transparent; }
 
-    .cl-img { position:relative; aspect-ratio:16/9; background:#1c1e24; overflow:hidden; }
+    .cl-img { position:relative; aspect-ratio:16/9; background:#1c1e24; overflow:hidden; flex-shrink:0; }
     .cl-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
     .cl-card:hover .cl-img img { transform:scale(1.05); }
     .cl-img::after { content:""; position:absolute; inset:auto 0 0 0; height:55%; background:linear-gradient(transparent, rgba(0,0,0,.72)); pointer-events:none; }
-    .cl-badge { position:absolute; top:14px; left:14px; z-index:2; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:700; color:#fff; background:var(--red); box-shadow:0 6px 14px rgba(227,30,36,.35); }
+    .cl-badge { position:absolute; top:12px; left:12px; z-index:2; display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; background:var(--red); box-shadow:0 5px 12px rgba(227,30,36,.35); }
 
-    .cl-body { padding:20px 22px 22px; display:flex; flex-direction:column; flex:1; }
-    .cl-cat { display:inline-flex; align-self:flex-start; background:var(--red-soft); color:var(--red); font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:999px; align-items:center; margin-bottom:12px; }
+    .cl-body { padding:16px 18px 18px; display:flex; flex-direction:column; flex:1; min-width:0; }
 
-    .cl-teacher { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-    .cl-teacher-img { width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid #e5e7eb; background:#f3f4f6; box-shadow:0 2px 6px rgba(0,0,0,.08); }
-    .cl-teacher-fallback { width:44px; height:44px; border-radius:50%; background:var(--red-soft); color:var(--red); display:inline-flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; border:2px solid #fdecec; }
-    .cl-teacher-name { font-size:14.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cl-cat-slot { min-height:26px; margin-bottom:10px; display:flex; align-items:flex-start; }
+    .cl-cat { display:inline-flex; align-self:flex-start; background:var(--red-soft); color:var(--red); font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; align-items:center; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    .cl-title { font-size:20px; font-weight:800; color:var(--ink); margin:0 0 6px; line-height:1.3; letter-spacing:-.2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .cl-sub-t { color:var(--muted); font-size:14px; font-weight:500; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .cl-desc { color:#555b66; font-size:15px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .cl-teacher { display:flex; align-items:center; gap:10px; margin-bottom:8px; min-height:40px; }
+    .cl-teacher-img { width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid #e5e7eb; background:#f3f4f6; }
+    .cl-teacher-fallback { width:38px; height:38px; border-radius:50%; background:var(--red-soft); color:var(--red); display:inline-flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:2px solid #fdecec; }
+    .cl-teacher-name { font-size:13.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 
-    /* ---------- Schedule (Year / Day / Time / Fee) ---------- */
-    .cl-schedule { display:flex; flex-direction:column; gap:8px; margin:14px 0 4px; }
-    .cl-slot { display:flex; flex-wrap:wrap; align-items:center; gap:6px; background:#f6f7f9; border:1px solid var(--line); border-radius:12px; padding:8px 10px; }
-    .cl-chip { display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--ink); border-radius:8px; padding:5px 9px; font-size:12.5px; font-weight:600; border:1px solid var(--line); }
-    .cl-chip i { color:var(--red); font-size:11px; }
+    .cl-title { font-size:18px; font-weight:800; color:var(--ink); margin:0 0 4px; line-height:1.3; letter-spacing:-.2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.5em; }
+    .cl-sub-t { color:var(--muted); font-size:13px; font-weight:500; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:18px; }
+    .cl-desc { color:#555b66; font-size:13.5px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.9em; }
+
+    /* ---------- Compact Schedule ---------- */
+    .cl-schedule { display:flex; flex-direction:column; gap:6px; margin:12px 0 2px; }
+    .cl-slot {
+        display:flex; flex-wrap:wrap; align-items:center; gap:5px;
+        background:#f6f7f9; border:1px solid var(--line); border-radius:10px;
+        padding:6px 8px;
+    }
+    .cl-chip {
+        display:inline-flex; align-items:center; gap:4px;
+        background:#fff; color:var(--ink); border-radius:7px;
+        padding:3px 7px; font-size:11.5px; font-weight:600;
+        border:1px solid var(--line); line-height:1.3;
+    }
+    .cl-chip i { color:var(--red); font-size:10px; }
     .cl-chip.year { background:var(--red); color:#fff; border-color:var(--red); }
     .cl-chip.year i { color:#fff; }
     .cl-chip.fee { background:#ecfdf3; color:#15803d; border-color:#bbf7d0; margin-left:auto; font-weight:700; }
     .cl-chip.fee i { color:#15803d; }
 
-    .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); margin-top:auto; padding-top:16px; }
-    .cl-meta-wrap { margin-top:16px; display:flex; flex-direction:column; flex:1; justify-content:flex-end; }
-    .cl-dur { color:var(--muted); font-size:14.5px; font-weight:500; display:flex; align-items:center; gap:8px; }
+    .cl-more-slots {
+        font-size:12px; font-weight:600; color:var(--red);
+        padding:2px 4px; margin-top:2px;
+    }
+
+    /* Footer */
+    .cl-meta-wrap { margin-top:auto; padding-top:14px; display:flex; flex-direction:column; }
+    .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:14px; min-height:48px; }
+    .cl-dur { color:var(--muted); font-size:13.5px; font-weight:500; display:flex; align-items:center; gap:6px; }
     .cl-dur i { color:var(--red); }
-    .cl-price { color:var(--ink); font-size:20px; font-weight:800; }
+    .cl-price { color:var(--ink); font-size:18px; font-weight:800; }
     .cl-price.free { color:#16a34a; }
 
+    .cl-actions { margin-top:12px; display:flex; }
     .cl-actions .det {
-        flex:1; display:inline-flex; align-items:center; justify-content:center; text-align:center;
+        flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px; text-align:center;
         background:linear-gradient(135deg, #E31E24, #B91C1C); color:#ffffff; border:none;
-        font-size:15px; font-weight:700; padding:14px 20px; border-radius:12px; text-decoration:none;
-        box-shadow:0 6px 18px rgba(227,30,36,.3); transition:all .3s ease; cursor:pointer;
+        font-size:14.5px; font-weight:700; padding:12px 16px; border-radius:11px; text-decoration:none;
+        box-shadow:0 5px 15px rgba(227,30,36,.28); transition:all .25s ease; cursor:pointer;
     }
     .cl-actions .det:hover {
         background:linear-gradient(135deg, #B91C1C, #991B1B); color:#ffffff;
-        transform:translateY(-3px); box-shadow:0 10px 25px rgba(227,30,36,.4);
+        transform:translateY(-2px); box-shadow:0 8px 20px rgba(227,30,36,.38);
     }
 
-    .cl-empty { background:#fff; border:1px solid var(--line); border-radius:20px; padding:70px 20px; text-align:center; color:var(--muted); }
-    .cl-empty i { font-size:40px; color:var(--red); margin-bottom:16px; }
-    .cl-empty h4 { margin:0 0 6px; color:var(--ink); font-size:20px; font-weight:700; }
+    .cl-empty { background:#fff; border:1px solid var(--line); border-radius:18px; padding:60px 20px; text-align:center; color:var(--muted); }
+    .cl-empty i { font-size:38px; color:var(--red); margin-bottom:14px; }
+    .cl-empty h4 { margin:0 0 6px; color:var(--ink); font-size:19px; font-weight:700; }
     .cl-empty p { margin:0; }
 
-    .cl-pager { display:flex; justify-content:center; gap:8px; margin-top:40px; flex-wrap:wrap; }
-    .cl-pager a, .cl-pager span { min-width:42px; height:42px; padding:0 12px; display:flex; align-items:center; justify-content:center; border-radius:12px; background:#fff; border:1px solid var(--line); color:#444; text-decoration:none; font-weight:600; transition:border-color .2s, color .2s; }
+    .cl-pager { display:flex; justify-content:center; gap:8px; margin-top:36px; flex-wrap:wrap; }
+    .cl-pager a, .cl-pager span { min-width:40px; height:40px; padding:0 11px; display:flex; align-items:center; justify-content:center; border-radius:11px; background:#fff; border:1px solid var(--line); color:#444; text-decoration:none; font-weight:600; transition:border-color .2s, color .2s; }
     .cl-pager a:hover { border-color:var(--red); color:var(--red); }
     .cl-pager .cur { background:var(--red); border-color:var(--red); color:#fff; }
     .cl-pager .dis { opacity:.4; }
 
     .cl-card a:focus-visible, .cl-pager a:focus-visible, .cl-clear:focus-visible { outline:3px solid var(--red); outline-offset:2px; }
 
-    @media (max-width:1100px) { .cl-grid { grid-template-columns:repeat(2, 1fr); } }
-    @media (max-width:860px) { .cl-wrap { grid-template-columns:1fr; } .cl-side { position:static; } }
-    @media (max-width:560px) { .cl-grid { grid-template-columns:1fr; } .cl-head h1 { font-size:26px; } }
-    @media (prefers-reduced-motion: reduce) { .cl-card, .cl-img img, .cl-actions .det, .cl-chev-btn i { transition:none; } .cl-sub.open { animation:none; } .cl-card:hover { transform:none; } .cl-card:hover .cl-img img { transform:none; } }
+    @media (max-width:1100px) { .cl-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    @media (max-width:860px) { .cl-wrap { grid-template-columns:minmax(0,1fr); } .cl-side { position:static; } }
+    @media (max-width:560px) { .cl-grid { grid-template-columns:minmax(0,1fr); } .cl-head h1 { font-size:26px; } }
+    @media (prefers-reduced-motion: reduce) {
+        .cl-card, .cl-img img, .cl-actions .det, .cl-chev-btn i { transition:none; }
+        .cl-sub.open { animation:none; }
+        .cl-card:hover { transform:none; }
+        .cl-card:hover .cl-img img { transform:none; }
+    }
 </style>
 
 <div class="cl-page">
@@ -491,6 +524,11 @@ include __DIR__ . '/includes/header.php';
                 foreach ($classSchedules as $scChk) {
                     if ($scChk['fee'] !== null && $scChk['fee'] !== '') { $hasSlotFee = true; break; }
                 }
+
+                // Show max 3 slots on the card
+                $maxSlots = 3;
+                $visibleSchedules = array_slice($classSchedules, 0, $maxSlots);
+                $extraCount = count($classSchedules) - count($visibleSchedules);
             ?>
             <article class="cl-card">
                 <div class="cl-img">
@@ -501,12 +539,14 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <div class="cl-body">
-                    <?php if ($subName): ?>
-                        <div class="cl-cat"><?php echo e($subName); ?></div>
-                    <?php endif; ?>
+                    <div class="cl-cat-slot">
+                        <?php if ($subName): ?>
+                            <div class="cl-cat"><?php echo e($subName); ?></div>
+                        <?php endif; ?>
+                    </div>
 
-                    <?php if ($teacherName): ?>
-                        <div class="cl-teacher">
+                    <div class="cl-teacher">
+                        <?php if ($teacherName): ?>
                             <?php if (!empty($teacherImage)): ?>
                                 <img src="<?php echo getImageUrl($teacherImage); ?>" 
                                      alt="<?php echo e($teacherName); ?>" 
@@ -517,23 +557,18 @@ include __DIR__ . '/includes/header.php';
                                 </span>
                             <?php endif; ?>
                             <span class="cl-teacher-name"><?php echo e($teacherName); ?></span>
-                        </div>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
 
                     <h3 class="cl-title"><?php echo e($c['title']); ?></h3>
 
-                    <?php if (!empty($c['subtitle'])): ?>
-                        <div class="cl-sub-t"><?php echo e($c['subtitle']); ?></div>
-                    <?php endif; ?>
+                    <div class="cl-sub-t"><?php echo !empty($c['subtitle']) ? e($c['subtitle']) : ''; ?></div>
 
-                    <?php if (!empty($c['description'])): ?>
-                        <div class="cl-desc"><?php echo e($c['description']); ?></div>
-                    <?php endif; ?>
+                    <div class="cl-desc"><?php echo !empty($c['description']) ? e($c['description']) : ''; ?></div>
 
-                    <!-- Year / Day / Time / Fee (multiple) -->
-                    <?php if (!empty($classSchedules)): ?>
+                    <?php if (!empty($visibleSchedules)): ?>
                         <div class="cl-schedule">
-                            <?php foreach ($classSchedules as $sc):
+                            <?php foreach ($visibleSchedules as $sc):
                                 $t = clTime($sc['start_time']);
                                 if ($t && !empty($sc['end_time'])) { $t .= ' – ' . clTime($sc['end_time']); }
                                 $slotFee = ($sc['fee'] !== null && $sc['fee'] !== '') ? (float)$sc['fee'] : null;
@@ -553,6 +588,10 @@ include __DIR__ . '/includes/header.php';
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
+
+                            <?php if ($extraCount > 0): ?>
+                                <div class="cl-more-slots">+<?php echo $extraCount; ?> more schedule<?php echo $extraCount > 1 ? 's' : ''; ?></div>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
 

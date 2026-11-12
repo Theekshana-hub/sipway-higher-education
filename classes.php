@@ -610,9 +610,7 @@ include __DIR__ . '/includes/header.php';
                             <?php endif; ?>
                         </div>
                         <div class="cl-actions">
-                            <a class="det" href="<?php echo asset('class-details.php?id=' . (int)$c['id']); ?>">
-                                View Details <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                           
                         </div>
                     </div>
                 </div>

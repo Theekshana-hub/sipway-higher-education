@@ -166,7 +166,7 @@ if ($categoryId) {
     }
 }
 
-// Subject filter (more specific)
+// Subject filter
 if ($subjectId) {
     if ($mode === 'direct') {
         $where[]  = "c.subject_id = ?";
@@ -197,7 +197,7 @@ $stmt = $pdo->prepare("SELECT c.*, $selectSubject, $selectTeacher
 $stmt->execute($params);
 $classes = $stmt->fetchAll();
 
-/* ---------- Load schedules (Year / Day / Time / Fee) for these classes ---------- */
+/* ---------- Load schedules ---------- */
 $schedulesByClass = [];
 if (!empty($classes)) {
     try {
@@ -240,13 +240,12 @@ include __DIR__ . '/includes/header.php';
     .cl-wrap { max-width:1280px; margin:0 auto; padding:44px 20px 80px; display:grid; grid-template-columns:290px minmax(0,1fr); gap:32px; align-items:start; }
     .cl-wrap > main { min-width:0; }
 
-    /* ---------- Sidebar ---------- */
+    /* Sidebar */
     .cl-side { background:#fff; border:1px solid var(--line); border-radius:28px; padding:26px 20px; position:sticky; top:90px; box-shadow:0 10px 30px rgba(22,24,29,.05); }
     .cl-side h5 { font-family:'Poppins','Inter',sans-serif; font-size:17px; font-weight:700; color:var(--ink); margin:0 0 14px; padding-bottom:12px; border-bottom:2px solid var(--line); display:flex; align-items:center; gap:10px; }
     .cl-side h5 i { font-size:16px; color:var(--ink); }
     .cl-side h5.mt { margin-top:26px; }
 
-    /* ---------- Category list ---------- */
     .cl-cat-list { list-style:none; padding:0; margin:0 0 6px; }
     .cl-cat-list > li { margin-bottom:4px; }
 
@@ -263,7 +262,6 @@ include __DIR__ . '/includes/header.php';
     .cl-cat-link i { width:18px; text-align:center; font-size:14px; flex-shrink:0; }
     .cl-cat-row:hover .cl-cat-link { color:var(--red); }
     .cl-cat-row.active .cl-cat-link { color:var(--red); font-weight:600; }
-    .cl-cat-row.no-sub { }
     .cl-cat-row.no-sub .cl-cat-link { flex:1; }
 
     .cl-chev-btn {
@@ -276,7 +274,6 @@ include __DIR__ . '/includes/header.php';
     .cl-chev-btn[aria-expanded="true"] i { transform:rotate(180deg); }
     .cl-chev-btn:focus-visible, .cl-cat-link:focus-visible, .cl-sub a:focus-visible { outline:3px solid var(--red); outline-offset:2px; }
 
-    /* ---------- Sub-category dropdown ---------- */
     .cl-sub { list-style:none; margin:4px 0 6px; padding:0; display:none; }
     .cl-sub.open { display:block; animation:clDrop .2s ease; }
     @keyframes clDrop { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
@@ -294,14 +291,13 @@ include __DIR__ . '/includes/header.php';
     .cl-clear { display:inline-flex; align-items:center; gap:6px; margin:10px 0 0 6px; color:var(--red); font-size:14px; font-weight:600; text-decoration:none; }
     .cl-clear:hover { text-decoration:underline; }
 
-    /* ---------- Search ---------- */
     .cl-search { display:flex; }
     .cl-search input { flex:1; min-width:0; border:1px solid var(--line); border-right:0; border-radius:12px 0 0 12px; padding:13px 16px; font-size:15px; outline:none; font-family:inherit; color:var(--ink); transition:border-color .2s; }
     .cl-search input:focus { border-color:var(--red); }
     .cl-search button { background:var(--red); color:#fff; border:0; width:52px; border-radius:0 12px 12px 0; cursor:pointer; font-size:15px; transition:background .2s; }
     .cl-search button:hover { background:var(--red-dark); }
 
-    /* ---------- Header ---------- */
+    /* Header */
     .cl-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:26px; }
     .cl-head h1 { font-size:32px; font-weight:800; color:var(--ink); margin:0; letter-spacing:-.5px; }
     .cl-count { color:var(--muted); font-size:15px; margin-top:4px; }
@@ -309,7 +305,7 @@ include __DIR__ . '/includes/header.php';
     .cl-tag { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); color:var(--ink); border-radius:999px; padding:8px 14px; font-size:13.5px; font-weight:600; }
     .cl-tag i { color:var(--red); font-size:12px; }
 
-    /* ---------- GRID ---------- */
+    /* Grid */
     .cl-grid {
         display:grid;
         grid-template-columns:repeat(3, minmax(0, 1fr));
@@ -339,12 +335,14 @@ include __DIR__ . '/includes/header.php';
     .cl-teacher-fallback { width:38px; height:38px; border-radius:50%; background:var(--red-soft); color:var(--red); display:inline-flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; border:2px solid #fdecec; }
     .cl-teacher-name { font-size:13.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 
-    .cl-title { font-size:18px; font-weight:800; color:var(--ink); margin:0 0 4px; line-height:1.3; letter-spacing:-.2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.5em; }
-    .cl-sub-t { color:var(--muted); font-size:13px; font-weight:500; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:18px; }
-    .cl-desc { color:#555b66; font-size:13.5px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.9em; }
+    .cl-title { font-size:18px; font-weight:800; color:var(--ink); margin:0 0 6px; line-height:1.3; letter-spacing:-.2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-    /* ---------- Compact Schedule ---------- */
-    .cl-schedule { display:flex; flex-direction:column; gap:6px; margin:12px 0 2px; }
+    /* Only show subtitle / description when they have content → no empty space */
+    .cl-sub-t { color:var(--muted); font-size:13px; font-weight:500; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cl-desc { color:#555b66; font-size:13.5px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:4px; }
+
+    /* Schedule */
+    .cl-schedule { display:flex; flex-direction:column; gap:6px; margin:10px 0 2px; }
     .cl-slot {
         display:flex; flex-wrap:wrap; align-items:center; gap:5px;
         background:#f6f7f9; border:1px solid var(--line); border-radius:10px;
@@ -362,30 +360,44 @@ include __DIR__ . '/includes/header.php';
     .cl-chip.fee { background:#ecfdf3; color:#15803d; border-color:#bbf7d0; margin-left:auto; font-weight:700; }
     .cl-chip.fee i { color:#15803d; }
 
-    .cl-more-slots {
-        font-size:12px; font-weight:600; color:var(--red);
-        padding:2px 4px; margin-top:2px;
+    /* Expandable extra schedules */
+    .cl-extra-slots {
+        display:none;
+        flex-direction:column;
+        gap:6px;
+        margin-top:0;
+    }
+    .cl-extra-slots.open {
+        display:flex;
+        animation:clDrop .22s ease;
     }
 
-    /* Footer */
-    .cl-meta-wrap { margin-top:auto; padding-top:14px; display:flex; flex-direction:column; }
-    .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:14px; min-height:48px; }
+    .cl-more-btn {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        margin-top:4px;
+        padding:4px 2px;
+        background:none;
+        border:none;
+        color:var(--red);
+        font-size:12.5px;
+        font-weight:600;
+        cursor:pointer;
+        font-family:inherit;
+        transition:color .15s;
+    }
+    .cl-more-btn:hover { color:var(--red-dark); text-decoration:underline; }
+    .cl-more-btn i { font-size:11px; transition:transform .2s; }
+    .cl-more-btn[aria-expanded="true"] i { transform:rotate(180deg); }
+
+    /* Footer – only duration now (button removed) */
+    .cl-meta-wrap { margin-top:auto; padding-top:14px; }
+    .cl-meta { display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:14px; min-height:42px; }
     .cl-dur { color:var(--muted); font-size:13.5px; font-weight:500; display:flex; align-items:center; gap:6px; }
     .cl-dur i { color:var(--red); }
     .cl-price { color:var(--ink); font-size:18px; font-weight:800; }
     .cl-price.free { color:#16a34a; }
-
-    .cl-actions { margin-top:12px; display:flex; }
-    .cl-actions .det {
-        flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px; text-align:center;
-        background:linear-gradient(135deg, #E31E24, #B91C1C); color:#ffffff; border:none;
-        font-size:14.5px; font-weight:700; padding:12px 16px; border-radius:11px; text-decoration:none;
-        box-shadow:0 5px 15px rgba(227,30,36,.28); transition:all .25s ease; cursor:pointer;
-    }
-    .cl-actions .det:hover {
-        background:linear-gradient(135deg, #B91C1C, #991B1B); color:#ffffff;
-        transform:translateY(-2px); box-shadow:0 8px 20px rgba(227,30,36,.38);
-    }
 
     .cl-empty { background:#fff; border:1px solid var(--line); border-radius:18px; padding:60px 20px; text-align:center; color:var(--muted); }
     .cl-empty i { font-size:38px; color:var(--red); margin-bottom:14px; }
@@ -398,14 +410,14 @@ include __DIR__ . '/includes/header.php';
     .cl-pager .cur { background:var(--red); border-color:var(--red); color:#fff; }
     .cl-pager .dis { opacity:.4; }
 
-    .cl-card a:focus-visible, .cl-pager a:focus-visible, .cl-clear:focus-visible { outline:3px solid var(--red); outline-offset:2px; }
+    .cl-card a:focus-visible, .cl-pager a:focus-visible, .cl-clear:focus-visible, .cl-more-btn:focus-visible { outline:3px solid var(--red); outline-offset:2px; }
 
     @media (max-width:1100px) { .cl-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
     @media (max-width:860px) { .cl-wrap { grid-template-columns:minmax(0,1fr); } .cl-side { position:static; } }
     @media (max-width:560px) { .cl-grid { grid-template-columns:minmax(0,1fr); } .cl-head h1 { font-size:26px; } }
     @media (prefers-reduced-motion: reduce) {
-        .cl-card, .cl-img img, .cl-actions .det, .cl-chev-btn i { transition:none; }
-        .cl-sub.open { animation:none; }
+        .cl-card, .cl-img img, .cl-chev-btn i, .cl-more-btn i { transition:none; }
+        .cl-sub.open, .cl-extra-slots.open { animation:none; }
         .cl-card:hover { transform:none; }
         .cl-card:hover .cl-img img { transform:none; }
     }
@@ -414,11 +426,8 @@ include __DIR__ . '/includes/header.php';
 <div class="cl-page">
 <div class="cl-wrap">
     <aside class="cl-side">
-        <!-- Categories -->
         <h5><i class="fa-solid fa-filter"></i> Categories</h5>
         <ul class="cl-cat-list">
-
-            <!-- All Classes -->
             <li>
                 <div class="cl-cat-row no-sub <?php echo !$categoryId ? 'active' : ''; ?>">
                     <a class="cl-cat-link" href="<?php echo clUrl(['category' => '', 'subject' => '', 'page' => 1]); ?>">
@@ -474,7 +483,6 @@ include __DIR__ . '/includes/header.php';
             </a>
         <?php endif; ?>
 
-        <!-- Search -->
         <h5 class="mt"><i class="fa-solid fa-magnifying-glass"></i> Search</h5>
         <form method="GET" action="<?php echo asset('classes.php'); ?>" class="cl-search">
             <?php if ($categoryId): ?><input type="hidden" name="category" value="<?php echo $categoryId; ?>"><?php endif; ?>
@@ -525,10 +533,14 @@ include __DIR__ . '/includes/header.php';
                     if ($scChk['fee'] !== null && $scChk['fee'] !== '') { $hasSlotFee = true; break; }
                 }
 
-                // Show max 3 slots on the card
-                $maxSlots = 3;
-                $visibleSchedules = array_slice($classSchedules, 0, $maxSlots);
-                $extraCount = count($classSchedules) - count($visibleSchedules);
+                $maxVisible = 3;
+                $visibleSchedules = array_slice($classSchedules, 0, $maxVisible);
+                $extraSchedules   = array_slice($classSchedules, $maxVisible);
+                $extraCount       = count($extraSchedules);
+                $cardId           = 'cl-sched-' . (int)$c['id'];
+
+                $hasSubtitle = !empty(trim($c['subtitle'] ?? ''));
+                $hasDesc     = !empty(trim($c['description'] ?? ''));
             ?>
             <article class="cl-card">
                 <div class="cl-img">
@@ -562,11 +574,15 @@ include __DIR__ . '/includes/header.php';
 
                     <h3 class="cl-title"><?php echo e($c['title']); ?></h3>
 
-                    <div class="cl-sub-t"><?php echo !empty($c['subtitle']) ? e($c['subtitle']) : ''; ?></div>
+                    <?php if ($hasSubtitle): ?>
+                        <div class="cl-sub-t"><?php echo e($c['subtitle']); ?></div>
+                    <?php endif; ?>
 
-                    <div class="cl-desc"><?php echo !empty($c['description']) ? e($c['description']) : ''; ?></div>
+                    <?php if ($hasDesc): ?>
+                        <div class="cl-desc"><?php echo e($c['description']); ?></div>
+                    <?php endif; ?>
 
-                    <?php if (!empty($visibleSchedules)): ?>
+                    <?php if (!empty($classSchedules)): ?>
                         <div class="cl-schedule">
                             <?php foreach ($visibleSchedules as $sc):
                                 $t = clTime($sc['start_time']);
@@ -590,7 +606,37 @@ include __DIR__ . '/includes/header.php';
                             <?php endforeach; ?>
 
                             <?php if ($extraCount > 0): ?>
-                                <div class="cl-more-slots">+<?php echo $extraCount; ?> more schedule<?php echo $extraCount > 1 ? 's' : ''; ?></div>
+                                <div class="cl-extra-slots" id="<?php echo $cardId; ?>">
+                                    <?php foreach ($extraSchedules as $sc):
+                                        $t = clTime($sc['start_time']);
+                                        if ($t && !empty($sc['end_time'])) { $t .= ' – ' . clTime($sc['end_time']); }
+                                        $slotFee = ($sc['fee'] !== null && $sc['fee'] !== '') ? (float)$sc['fee'] : null;
+                                    ?>
+                                        <div class="cl-slot">
+                                            <?php if (!empty($sc['class_year'])): ?>
+                                                <span class="cl-chip year"><i class="fa-solid fa-graduation-cap"></i> <?php echo e($sc['class_year']); ?></span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($sc['class_day'])): ?>
+                                                <span class="cl-chip"><i class="fa-regular fa-calendar"></i> <?php echo e($sc['class_day']); ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($t): ?>
+                                                <span class="cl-chip"><i class="fa-regular fa-clock"></i> <?php echo e($t); ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($slotFee !== null): ?>
+                                                <span class="cl-chip fee"><i class="fa-solid fa-tag"></i> <?php echo $slotFee > 0 ? 'Rs. ' . number_format($slotFee) : 'Free'; ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <button type="button" class="cl-more-btn"
+                                        aria-expanded="false"
+                                        aria-controls="<?php echo $cardId; ?>"
+                                        data-more="+<?php echo $extraCount; ?> more schedule<?php echo $extraCount > 1 ? 's' : ''; ?>"
+                                        data-less="Show less">
+                                    <span class="cl-more-text">+<?php echo $extraCount; ?> more schedule<?php echo $extraCount > 1 ? 's' : ''; ?></span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
@@ -608,9 +654,6 @@ include __DIR__ . '/includes/header.php';
                                     <?php echo $isFree ? 'Free' : 'Rs. ' . number_format((float)$price); ?>
                                 </span>
                             <?php endif; ?>
-                        </div>
-                        <div class="cl-actions">
-                           
                         </div>
                     </div>
                 </div>
@@ -648,6 +691,7 @@ include __DIR__ . '/includes/header.php';
 
 <script>
 (function () {
+    // Category accordion
     document.querySelectorAll('.cl-chev-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var list = document.getElementById(btn.getAttribute('aria-controls'));
@@ -655,6 +699,28 @@ include __DIR__ . '/includes/header.php';
             var open = btn.getAttribute('aria-expanded') === 'true';
             btn.setAttribute('aria-expanded', open ? 'false' : 'true');
             list.classList.toggle('open', !open);
+        });
+    });
+
+    // Schedule expand / collapse
+    document.querySelectorAll('.cl-more-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var targetId = btn.getAttribute('aria-controls');
+            var box = document.getElementById(targetId);
+            if (!box) return;
+
+            var isOpen = btn.getAttribute('aria-expanded') === 'true';
+            var textEl = btn.querySelector('.cl-more-text');
+
+            if (isOpen) {
+                box.classList.remove('open');
+                btn.setAttribute('aria-expanded', 'false');
+                if (textEl) textEl.textContent = btn.getAttribute('data-more');
+            } else {
+                box.classList.add('open');
+                btn.setAttribute('aria-expanded', 'true');
+                if (textEl) textEl.textContent = btn.getAttribute('data-less');
+            }
         });
     });
 })();
